@@ -14,20 +14,27 @@ Borders remain visible around forms and controls in both themes. Primary actions
 have consistent heights, inset highlights, and clear pressed and disabled states.
 
 The welcome view pairs editorial copy and an immediately available start action
-with Lumen's framed botanical portrait. Three full-width journey cards explain
-Notice, Reflect, and Care below. On phones these become a single column, with
-the start action before the artwork. The survey companion has a separate paper
-surface on desktop and becomes an inline row below 850px. Content always uses
-normal document scrolling. The organizer login uses a two-column introduction
-and form; dashboard metrics, charts, and intention cards share the same surfaces.
-Chart labels and values sit above their tracks so long labels fit narrow screens.
+with Lumen's framed botanical portrait. Above 680px the application fits the
+viewport using `app/viewport.css`. Desktop omits the secondary journey cards,
+repeated reassurance, and duplicate question labels to preserve generous type
+and spacing. The progress rail and question navigation keep stable bounds across
+all six questions. Answer explanations have a reserved column; the completion
+screen places the affirmation and intention side by side. The privacy disclosure
+opens above its trigger without changing the page height.
 
-The survey uses normal document scrolling, native keyboard-operable radio
-controls, clearly described selection limits, visible focus, optional questions,
-and layouts for narrow phones, landscape phones, tablets, and larger screens.
-Lumen stays mounted between survey views. On phones the welcome introduction,
-start action, and companion form one vertical composition; during questions the
-companion becomes a compact row rather than covering the form.
+Lumen stays mounted between survey views. It has its own paper surface on wide
+screens and shares the progress row on narrower tablets. Short desktop windows
+omit the secondary companion panel to give the form its full width. Below 681px,
+the welcome introduction, start action, companion, and journey cards use normal
+document scrolling, and the survey companion becomes an inline row. Only mobile
+question changes scroll the heading into view. Native radio controls, visible
+focus, and selection limits remain available in both layouts.
+
+The organizer login uses a two-column introduction and form. The desktop census
+keeps its header, metrics, and tabs in the viewport; long data collections scroll
+inside their panel. Chart labels sit above their tracks so long labels fit narrow
+screens. Exceptionally short windows (540px or less in height) retain an overflow
+fallback so zoom and unusual window sizes cannot make controls unreachable.
 
 The wreath is a separate, slightly tilted rear plane with soft leaf shadows.
 The character sits in front with silhouette-based cast shadows, a diffuse

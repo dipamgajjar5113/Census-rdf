@@ -4,7 +4,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { ProgressRail } from "./ProgressRail";
 import { ScaleInput } from "./inputs/ScaleInput";
 import { MultiInput } from "./inputs/MultiInput";
 import { SingleInput } from "./inputs/SingleInput";
@@ -16,24 +15,20 @@ interface Props {
   index: number;
   direction: 1 | -1;
   answers: Answer;
-  answeredCount: number;
   onAnswer: (q: Question, value: string | string[]) => void;
   onNext: () => void;
   onBack: () => void;
   onSkip: () => void;
-  onJump: (i: number) => void;
 }
 
 export function QuestionScreen({
   index,
   direction,
   answers,
-  answeredCount,
   onAnswer,
   onNext,
   onBack,
   onSkip,
-  onJump,
 }: Props) {
   const reduced = useReducedMotion() ?? false;
   const panel = useRef<HTMLDivElement>(null);
@@ -47,9 +42,11 @@ export function QuestionScreen({
     (heading: HTMLHeadingElement | null) => {
       if (!heading) return;
       heading.focus({ preventScroll: true });
-      // Long questions use the document's normal scroll, including on small
-      // screens and when the keyboard is open. No nested scroll enclosure.
-      if (index > 0 || direction < 0)
+      // Only mobile follows the document scroll. Desktop keeps its frame still.
+      if (
+        window.matchMedia("(max-width: 680px)").matches &&
+        (index > 0 || direction < 0)
+      )
         panel.current?.scrollIntoView({
           block: "start",
           behavior: reduced ? "auto" : "smooth",
@@ -60,12 +57,11 @@ export function QuestionScreen({
 
   return (
     <div className="question-panel" ref={panel}>
-      <ProgressRail
-        index={index}
-        answeredCount={answeredCount}
-        onJump={onJump}
-      />
-      <section className="question-paper" aria-label="Your private check-in">
+      <section
+        className="question-paper"
+        data-question={q.id}
+        aria-label="Your private check-in"
+      >
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
             key={q.id}

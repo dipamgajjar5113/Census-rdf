@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Leaf } from "lucide-react";
 import { WelcomeJourney, WelcomeScreen } from "./survey/WelcomeScreen";
 import { QuestionScreen } from "./survey/QuestionScreen";
+import { ProgressRail } from "./survey/ProgressRail";
 import { ThanksScreen } from "./survey/ThanksScreen";
 import { useLumen } from "./lumen/LumenProvider";
 import { Lumen } from "./lumen/Lumen";
@@ -167,7 +168,9 @@ export function SurveyApp() {
   }, [doSync]);
 
   const restart = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    if (window.matchMedia("(max-width: 680px)").matches) {
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    }
     setAnswers(EMPTY);
     setIndex(0);
     setDirection(1);
@@ -188,6 +191,15 @@ export function SurveyApp() {
 
   return (
     <main className="survey-experience" data-view={view}>
+      {view === "question" && (
+        <div className="experience-progress">
+          <ProgressRail
+            index={index}
+            answeredCount={answeredCount}
+            onJump={jump}
+          />
+        </div>
+      )}
       <div className="experience-art">
         {view !== "welcome" && (
           <div className="companion-heading">
@@ -211,16 +223,19 @@ export function SurveyApp() {
           {view === "welcome" && (
             <motion.div
               key="welcome"
+              className="experience-view"
               exit={{ opacity: reduced ? 1 : 0 }}
               transition={{ duration: reduced ? 0 : 0.25 }}
             >
               <WelcomeScreen
                 onStart={() => {
                   window.clearTimeout(welcomeTimer.current);
-                  window.scrollTo({
-                    top: 0,
-                    behavior: reduced ? "auto" : "smooth",
-                  });
+                  if (window.matchMedia("(max-width: 680px)").matches) {
+                    window.scrollTo({
+                      top: 0,
+                      behavior: reduced ? "auto" : "smooth",
+                    });
+                  }
                   setView("question");
                   setIndex(0);
                   lastRestKey.current = "";
@@ -239,6 +254,7 @@ export function SurveyApp() {
           {view === "question" && (
             <motion.div
               key="question"
+              className="experience-view"
               initial={{ opacity: reduced ? 1 : 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: reduced ? 1 : 0 }}
@@ -248,12 +264,10 @@ export function SurveyApp() {
                 index={index}
                 direction={direction}
                 answers={answers}
-                answeredCount={answeredCount}
                 onAnswer={handleAnswer}
                 onNext={goNext}
                 onBack={goBack}
                 onSkip={skip}
-                onJump={jump}
               />
             </motion.div>
           )}
@@ -261,6 +275,7 @@ export function SurveyApp() {
           {view === "thanks" && (
             <motion.div
               key="thanks"
+              className="experience-view"
               initial={{ opacity: reduced ? 1 : 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: reduced ? 0 : 0.3 }}
@@ -279,6 +294,9 @@ export function SurveyApp() {
       <footer className="experience-footer">
         <Leaf size={15} strokeWidth={1.3} />
         <span>A small pause. A shared step forward.</span>
+        <span className="experience-disclaimer">
+          A reflection, never a diagnosis.
+        </span>
         <span>Community Health Nursing · Health Fair</span>
       </footer>
     </main>

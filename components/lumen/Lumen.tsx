@@ -76,7 +76,10 @@ export function Lumen({
   const hero = presentation
     ? presentation === "hero"
     : !compact && !docked && stage === "welcome";
-  const systemReduced = useReducedMotion() ?? false;
+  const prefersReduced = useReducedMotion() ?? false;
+  const [hydrated, setHydrated] = useState(false);
+  // Keep the pause icon's first client render identical to its server markup.
+  const systemReduced = hydrated && prefersReduced;
   const [paused, setPaused] = useState(false);
   const reduced = systemReduced || paused;
   const [webgl, setWebgl] = useState(false);
@@ -94,6 +97,7 @@ export function Lumen({
   const palette = LUMEN_PALETTE[mood];
 
   useEffect(() => {
+    setHydrated(true);
     try {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("webgl2") || canvas.getContext("webgl");

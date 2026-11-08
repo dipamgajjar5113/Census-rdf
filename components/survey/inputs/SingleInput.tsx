@@ -35,7 +35,7 @@ export function SingleInput({
   const note =
     question.correct && selected ? question.explain : selected?.howto;
   return (
-    <div>
+    <div className="single-input" data-question={question.id}>
       <fieldset
         className="choice-list"
         aria-describedby={`help-${question.id}`}
@@ -67,25 +67,36 @@ export function SingleInput({
           );
         })}
       </fieldset>
-      <AnimatePresence mode="wait">
-        {note && (
-          <motion.div
-            key={question.correct ? "reflection" : selected?.value}
-            initial={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: reduced ? 1 : 0 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
-            className="reflection-note"
-            role="status"
-          >
+      <div className="reflection-slot">
+        {!note && (
+          <div className="reflection-placeholder" aria-hidden="true">
             <Lightbulb size={19} strokeWidth={1.5} />
-            <div>
-              {question.correct && <strong>A little perspective</strong>}
-              <p>{note}</p>
-            </div>
-          </motion.div>
+            <p>
+              Choose what feels right.
+              <span>A little perspective will appear here.</span>
+            </p>
+          </div>
         )}
-      </AnimatePresence>
+        <AnimatePresence mode="wait">
+          {note && (
+            <motion.div
+              key={question.correct ? "reflection" : selected?.value}
+              initial={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: reduced ? 1 : 0 }}
+              transition={{ duration: reduced ? 0 : 0.2 }}
+              className="reflection-note"
+              role="status"
+            >
+              <Lightbulb size={19} strokeWidth={1.5} />
+              <div>
+                {question.correct && <strong>A little perspective</strong>}
+                <p>{note}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

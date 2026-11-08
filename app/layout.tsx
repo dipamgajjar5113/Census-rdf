@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Lora, DM_Sans } from "next/font/google";
 import "./globals.css";
+import "./viewport.css";
 import { LumenProvider } from "@/components/lumen/LumenProvider";
 import { SiteChrome } from "@/components/SiteChrome";
 
