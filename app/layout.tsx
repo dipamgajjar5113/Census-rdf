@@ -1,26 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Lora, Raleway } from "next/font/google";
+import { Lora, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { LumenProvider } from "@/components/lumen/LumenProvider";
-import { Lumen } from "@/components/lumen/Lumen";
+import { DashboardLumen } from "@/components/lumen/Lumen";
 import { SiteChrome } from "@/components/SiteChrome";
 
 const lora = Lora({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   variable: "--font-lora",
   display: "swap",
 });
 
-const raleway = Raleway({
+const sans = DM_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-raleway",
+  variable: "--font-sans",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Community Census · Anonymous stress check-in",
+  title: "Stress Management · A moment for you",
   description:
     "A short, anonymous stress check-in for the Community Health Nursing health fair. Six questions, about two minutes, fully private.",
 };
@@ -28,7 +28,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#faf5ff",
+  themeColor: "#f6f3eb",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -37,7 +38,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${lora.variable} ${raleway.variable}`}>
+    <html
+      lang="en"
+      className={`${lora.variable} ${sans.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <div className="app-ambient" aria-hidden="true" />
         <LumenProvider>
@@ -48,7 +53,7 @@ export default function RootLayout({
             Skip to content
           </a>
           <SiteChrome />
-          <Lumen />
+          <DashboardLumen />
           <div id="main">{children}</div>
         </LumenProvider>
       </body>

@@ -24,15 +24,23 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-10 px-4 text-sm rounded-xl",
-  md: "h-12 px-6 text-[0.95rem] rounded-2xl",
-  lg: "h-14 px-8 text-base rounded-2xl",
+  sm: "min-h-[44px] px-4 py-2.5 text-sm rounded-full",
+  md: "min-h-12 px-6 py-3 text-[0.95rem] rounded-full",
+  lg: "min-h-14 px-7 py-4 text-base rounded-full",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { variant = "primary", size = "md", loading, className, children, disabled, ...rest },
-    ref
+    {
+      variant = "primary",
+      size = "md",
+      loading,
+      className,
+      children,
+      disabled,
+      ...rest
+    },
+    ref,
   ) => (
     <button
       ref={ref}
@@ -43,14 +51,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "cursor-pointer",
         variants[variant],
         sizes[size],
-        className
+        className,
       )}
       {...rest}
     >
-      {loading && <Loader2 size={18} className="animate-spin" aria-hidden="true" />}
+      {loading && (
+        <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+      )}
       {children}
     </button>
-  )
+  ),
 );
 
 Button.displayName = "Button";

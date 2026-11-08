@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Leaf } from "lucide-react";
 import { WelcomeScreen } from "./survey/WelcomeScreen";
 import { QuestionScreen } from "./survey/QuestionScreen";
 import { ThanksScreen } from "./survey/ThanksScreen";
 import { useLumen } from "./lumen/LumenProvider";
+import { Lumen } from "./lumen/Lumen";
 import { QUESTIONS } from "@/lib/questions";
 import { enqueue, flushQueue } from "@/lib/queue";
 import {
@@ -33,12 +35,14 @@ const EMPTY: Answer = {
 
 export function SurveyApp() {
   const lumen = useLumen();
+  const reduced = useReducedMotion() ?? false;
   const [view, setView] = useState<SurveyView>("welcome");
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [answers, setAnswers] = useState<Answer>(EMPTY);
   const [status, setStatus] = useState<SyncStatus>("busy");
   const visitId = useRef<string>("");
+  const welcomeTimer = useRef<number>();
 
   // one anonymous id per session + Lumen's first hello
   useEffect(() => {
@@ -46,8 +50,11 @@ export function SurveyApp() {
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const t = window.setTimeout(() => lumen.express(WELCOME_BEAT), 900);
-    return () => window.clearTimeout(t);
+    welcomeTimer.current = window.setTimeout(
+      () => lumen.express(WELCOME_BEAT),
+      900,
+    );
+    return () => window.clearTimeout(welcomeTimer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,7 +66,7 @@ export function SurveyApp() {
           ? Array.isArray(v) && v.length > 0
           : v != null && v !== "";
       }).length,
-    [answers]
+    [answers],
   );
 
   // Drive Lumen's progress as the user moves through.
@@ -94,7 +101,7 @@ export function SurveyApp() {
       setAnswers(next);
       lumen.express(reactionForAnswer(q, value, next, index));
     },
-    [answers, index, lumen.express]
+    [answers, index, lumen.express],
   );
 
   const doSync = useCallback(async () => {
@@ -135,14 +142,17 @@ export function SurveyApp() {
   }, []);
 
   const skip = useCallback(() => {
-    // leave the answer null and advance
+    setAnswers((previous) => ({ ...previous, [QUESTIONS[index].id]: null }));
     goNext();
-  }, [goNext]);
+  }, [goNext, index]);
 
-  const jump = useCallback((i: number) => {
-    setDirection(i < index ? -1 : 1);
-    setIndex(i);
-  }, [index]);
+  const jump = useCallback(
+    (i: number) => {
+      setDirection(i < index ? -1 : 1);
+      setIndex(i);
+    },
+    [index],
+  );
 
   // Re-sync on reconnect.
   useEffect(() => {
@@ -157,61 +167,113 @@ export function SurveyApp() {
   }, [doSync]);
 
   const restart = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     setAnswers(EMPTY);
     setIndex(0);
     setDirection(1);
     setView("welcome");
     lastRestKey.current = "";
-    lumen.express({ mood: "calm", expression: "content", reaction: "squeeze", say: "Round two? I'm ready.", sayMs: 2600 });
+    lumen.express({
+      mood: "calm",
+      expression: "content",
+      reaction: "squeeze",
+      say: "Round two? I'm ready.",
+      sayMs: 2600,
+    });
     visitId.current =
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }, [lumen]);
+  }, [lumen, reduced]);
 
   return (
-    <main className="relative">
-      <AnimatePresence mode="wait">
-        {view === "welcome" && (
-          <motion.div key="welcome" exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-            <WelcomeScreen
-              onStart={() => {
-                setView("question");
-                setIndex(0);
-                lastRestKey.current = "";
-                lumen.express({ expression: "content", reaction: "squeeze", say: "Here we go — one at a time." , sayMs: 2400 });
-              }}
-            />
-          </motion.div>
+    <main className="survey-experience" data-view={view}>
+      <div className="experience-art">
+        <Lumen presentation={view === "welcome" ? "hero" : "companion"} />
+        {view !== "welcome" && (
+          <div className="companion-note">
+            <Leaf size={16} strokeWidth={1.4} />
+            <p>
+              There’s no right way to feel.
+              <span>Just a little room to be yourself.</span>
+            </p>
+          </div>
         )}
+      </div>
+      <div className="experience-content">
+        <AnimatePresence mode="wait">
+          {view === "welcome" && (
+            <motion.div
+              key="welcome"
+              exit={{ opacity: reduced ? 1 : 0 }}
+              transition={{ duration: reduced ? 0 : 0.25 }}
+            >
+              <WelcomeScreen
+                onStart={() => {
+                  window.clearTimeout(welcomeTimer.current);
+                  window.scrollTo({
+                    top: 0,
+                    behavior: reduced ? "auto" : "smooth",
+                  });
+                  setView("question");
+                  setIndex(0);
+                  lastRestKey.current = "";
+                  lumen.express({
+                    mood: "calm",
+                    expression: "content",
+                    reaction: "squeeze",
+                    say: "Here we go — one at a time.",
+                    sayMs: 2400,
+                  });
+                }}
+              />
+            </motion.div>
+          )}
 
-        {view === "question" && (
-          <motion.div key="question" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-            <QuestionScreen
-              index={index}
-              direction={direction}
-              answers={answers}
-              answeredCount={answeredCount}
-              onAnswer={handleAnswer}
-              onNext={goNext}
-              onBack={goBack}
-              onSkip={skip}
-              onJump={jump}
-            />
-          </motion.div>
-        )}
+          {view === "question" && (
+            <motion.div
+              key="question"
+              initial={{ opacity: reduced ? 1 : 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: reduced ? 1 : 0 }}
+              transition={{ duration: reduced ? 0 : 0.25 }}
+            >
+              <QuestionScreen
+                index={index}
+                direction={direction}
+                answers={answers}
+                answeredCount={answeredCount}
+                onAnswer={handleAnswer}
+                onNext={goNext}
+                onBack={goBack}
+                onSkip={skip}
+                onJump={jump}
+              />
+            </motion.div>
+          )}
 
-        {view === "thanks" && (
-          <motion.div key="thanks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-            <ThanksScreen
-              answers={answers}
-              status={status}
-              onRetry={doSync}
-              onRestart={restart}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {view === "thanks" && (
+            <motion.div
+              key="thanks"
+              initial={{ opacity: reduced ? 1 : 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reduced ? 0 : 0.3 }}
+            >
+              <ThanksScreen
+                answers={answers}
+                status={status}
+                onRetry={doSync}
+                onRestart={restart}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <footer className="experience-footer">
+        <Leaf size={15} strokeWidth={1.3} />
+        <span>A small pause. A shared step forward.</span>
+        <span>Community Health Nursing · Health Fair</span>
+      </footer>
     </main>
   );
 }

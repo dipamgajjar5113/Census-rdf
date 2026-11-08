@@ -19,7 +19,7 @@ export function TextInput({
   const flagged = text.trim().length > 0 && looksIdentifying(text);
 
   return (
-    <div>
+    <div className="goal-input">
       <label htmlFor={id} className="sr-only">
         {question.prompt}
       </label>
@@ -31,21 +31,26 @@ export function TextInput({
           maxLength={max}
           rows={3}
           placeholder={question.placeholder}
-          aria-describedby={`${id}-help`}
-          className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-lg leading-relaxed text-fg shadow-soft-inset outline-none transition placeholder:text-muted-fg/60 focus:border-primary focus:shadow-glow"
+          aria-describedby={`${id}-help ${id}-count`}
+          aria-invalid={flagged}
+          className="goal-textarea"
         />
-        <span className="tnum absolute bottom-3 right-4 text-xs text-muted-fg">
+        <span id={`${id}-count`} className="goal-character-count tnum">
           {text.length}/{max}
         </span>
       </div>
-      <p id={`${id}-help`} className="mt-2 text-xs text-muted-fg">
+      <p
+        id={`${id}-help`}
+        className="goal-help"
+        role={flagged ? "alert" : undefined}
+      >
         {flagged ? (
           <span className="text-destructive">
             This looks like it might identify you (a name, email, or number). To
             stay anonymous, we'll leave it out — try phrasing it generally.
           </span>
         ) : (
-          "Completely optional and anonymous."
+          "A tiny goal is enough. Please leave out names and contact details."
         )}
       </p>
     </div>

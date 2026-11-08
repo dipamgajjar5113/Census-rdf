@@ -3,24 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BarChart3, Moon, Sun, Home } from "lucide-react";
+import { ArrowUpRight, Leaf, Moon, Sun, Home } from "lucide-react";
 
-/** Minimal top-corner chrome: theme toggle + context link. Avoids the center where Lumen lives. */
 export function SiteChrome() {
   const pathname = usePathname();
+  const onDashboard = pathname?.startsWith("/dashboard");
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const stored = (() => {
-      try {
-        return localStorage.getItem("cc-theme") as "light" | "dark" | null;
-      } catch {
-        return null;
-      }
-    })();
-    const initial =
-      stored ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem("cc-theme");
+    } catch {
+      /* Storage is optional. */
+    }
+    const initial = stored === "dark" ? "dark" : "light";
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
@@ -32,35 +29,53 @@ export function SiteChrome() {
     try {
       localStorage.setItem("cc-theme", next);
     } catch {
-      /* ignore */
+      /* Storage is optional. */
     }
   };
 
-  const onDashboard = pathname?.startsWith("/dashboard");
-
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 py-4 sm:px-6">
-      <div className="pointer-events-auto">
-        <span className="font-serif text-sm font-semibold tracking-tight text-fg/80">
-          Community<span className="text-primary"> Census</span>
+    <header className="site-header">
+      <Link
+        href="/"
+        className="site-brand"
+        aria-label="Stress Management — home"
+      >
+        <span className="site-brand-icon">
+          <Leaf size={23} strokeWidth={1.25} />
         </span>
-      </div>
-      <div className="pointer-events-auto flex items-center gap-2">
+        <span>
+          Stress <em>Management</em>
+          <small>THE COMMUNITY CHECK-IN</small>
+        </span>
+      </Link>
+      <span className="header-note">
+        <span /> Rooted in care. Here for you.
+      </span>
+      <nav className="header-actions" aria-label="Site navigation">
         <button
+          type="button"
           onClick={toggle}
+          className="theme-toggle"
           aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-          className="grid h-10 w-10 place-items-center rounded-full bg-card/80 text-fg shadow-soft backdrop-blur transition hover:scale-105"
         >
-          {theme === "light" ? <Moon size={17} aria-hidden="true" /> : <Sun size={17} aria-hidden="true" />}
+          {theme === "light" ? (
+            <Moon size={17} strokeWidth={1.6} />
+          ) : (
+            <Sun size={17} strokeWidth={1.6} />
+          )}
         </button>
         <Link
           href={onDashboard ? "/" : "/dashboard"}
-          aria-label={onDashboard ? "Back to check-in" : "Open organizer dashboard"}
-          className="grid h-10 w-10 place-items-center rounded-full bg-card/80 text-fg shadow-soft backdrop-blur transition hover:scale-105"
+          className="organizer-link"
+          aria-label={
+            onDashboard ? "Back to check-in" : "Open organizer dashboard"
+          }
         >
-          {onDashboard ? <Home size={17} aria-hidden="true" /> : <BarChart3 size={17} aria-hidden="true" />}
+          {onDashboard ? <Home size={15} /> : null}
+          <span>{onDashboard ? "Check-in" : "For organizers"}</span>
+          <ArrowUpRight size={15} strokeWidth={1.5} />
         </Link>
-      </div>
+      </nav>
     </header>
   );
 }

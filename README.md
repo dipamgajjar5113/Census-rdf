@@ -4,9 +4,9 @@ A world-class, **anonymous stress check-in** for a Community Health Nursing heal
 fair. Six questions, ~2 minutes, fully private — part reflection, part mini-lesson.
 Behind a password-protected dashboard, organizers see the aggregate census.
 
-Built to feel premium and calm: a soft-light "quiet depth" aesthetic, one question
-at a time, and a persistent breathing companion — **Lumen** — that stays with the
-participant from entry to finish.
+Inspired by the project's eucalyptus-and-timber health-fair sign: warm parchment,
+sage greens, natural botanical artwork, and a persistent 3D companion — **Lumen**.
+One question at a time, with native keyboard controls and normal page scrolling.
 
 ## The experience
 
@@ -30,10 +30,11 @@ Next.js 14 (App Router) · TypeScript · Tailwind · Framer Motion · React Thre
 
 ## Design system
 
-See `design-system/` notes and `app/globals.css`. Tokens: calming lavender ground
-`#FAF5FF`, deep violet ink, one wellness-green accent for progress/affirmation.
-Lora (serif, questions) + Raleway (sans, UI). Full light/dark theming via CSS
-variables; dark mode is desaturated tonal, not inverted.
+See `design/art-direction.md` and `app/globals.css`. Tokens: parchment ground
+`#F6F3EB`, deep olive ink, sage surfaces, and warm timber accents. Lora (serif,
+questions) + DM Sans (UI), with forest-green dark mode. The optimized botanical
+asset is local and keeps its transparency. Layouts adapt to portrait and landscape
+phones, tablets, and desktop screens without a fixed-height question enclosure.
 
 ## Running locally
 

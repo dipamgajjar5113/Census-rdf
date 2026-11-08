@@ -30,7 +30,7 @@ const config: Config = {
       },
       fontFamily: {
         serif: ["var(--font-lora)", "Georgia", "serif"],
-        sans: ["var(--font-raleway)", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         xl: "16px",
@@ -39,9 +39,10 @@ const config: Config = {
       },
       boxShadow: {
         // Soft "quiet depth" — multi-directional, low-contrast but on real surfaces.
-        soft: "0 1px 2px rgb(76 29 149 / 0.04), 0 8px 24px -8px rgb(76 29 149 / 0.12)",
-        "soft-lg": "0 2px 4px rgb(76 29 149 / 0.05), 0 18px 48px -12px rgb(76 29 149 / 0.18)",
-        "soft-inset": "inset 2px 2px 6px rgb(76 29 149 / 0.06), inset -2px -2px 6px rgb(255 255 255 / 0.7)",
+        soft: "0 1px 2px rgb(50 63 42 / 0.03), 0 8px 24px -8px rgb(50 63 42 / 0.09)",
+        "soft-lg":
+          "0 2px 4px rgb(50 63 42 / 0.03), 0 24px 64px -20px rgb(50 63 42 / 0.16)",
+        "soft-inset": "inset 1px 2px 5px rgb(50 63 42 / 0.04)",
         glow: "0 0 0 1px rgb(var(--c-ring) / 0.25), 0 8px 30px -6px rgb(var(--c-primary) / 0.35)",
       },
       transitionTimingFunction: {

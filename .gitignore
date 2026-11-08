@@ -3,6 +3,7 @@ node_modules/
 
 # Build output and generated TypeScript files
 .next/
+.next-verify/
 out/
 build/
 dist/
