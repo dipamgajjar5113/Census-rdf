@@ -239,6 +239,7 @@ export function Lumen({
             className={`lumen-fallback ${ready ? "lumen-fallback--hidden" : ""}`}
             aria-hidden="true"
           >
+            <span className="lumen-fallback-sprout" />
             <span className="lumen-fallback-eye lumen-fallback-eye--left" />
             <span className="lumen-fallback-eye lumen-fallback-eye--right" />
             <span className="lumen-fallback-cheek lumen-fallback-cheek--left" />
@@ -267,6 +268,7 @@ export function Lumen({
                 gaze={gaze}
                 reduced={reduced}
                 active={active}
+                hero={hero}
                 onReady={() => setReady(true)}
                 onLost={() => {
                   setReady(false);
@@ -279,7 +281,7 @@ export function Lumen({
         {hero && (
           <>
             <span className="lumen-name" aria-hidden="true">
-              lumen<span>YOUR LITTLE COMPANION</span>
+              lumen<span>A LITTLE ROOM TO GROW</span>
             </span>
             <span className="lumen-touch-note" aria-hidden="true">
               <Sparkles size={12} /> tap for a little hello

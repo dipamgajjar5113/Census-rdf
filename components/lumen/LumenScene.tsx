@@ -2,135 +2,30 @@
 
 import { Environment, Lightformer } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
+import { damp, dampC } from "maath/easing";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
 import * as THREE from "three";
 import { LUMEN_PALETTE } from "@/lib/lumen-visuals";
+import { blinkOpenness, LUMEN_POSES, reactionPose } from "@/lib/lumen-motion";
 import type { LumenExpression, LumenMood, LumenReaction } from "@/lib/types";
+import { createSeedMaterial, seedSurface } from "./lumen-material";
+import {
+  createLeafResources,
+  disposeLeaves,
+  type LeafResources,
+} from "./lumen-botany";
 
 export type LumenGaze = MutableRefObject<{ x: number; y: number }>;
-const INK = "#313c2f";
-const FACE: Record<
-  LumenExpression,
-  { open: number; smile: number; round: number; tilt: number; brow: number }
-> = {
-  calm: { open: 1, smile: 0.045, round: 0, tilt: 0, brow: 0 },
-  warm: { open: 0.9, smile: 0.09, round: 0, tilt: -0.07, brow: 0.12 },
-  tender: { open: 0.64, smile: -0.025, round: 0, tilt: 0.1, brow: -0.32 },
-  curious: { open: 1.18, smile: 0.02, round: 0.045, tilt: -0.13, brow: 0.28 },
-  content: { open: 0.7, smile: 0.11, round: 0, tilt: 0.04, brow: 0.05 },
-  radiant: { open: 0.12, smile: 0.14, round: 0.065, tilt: -0.045, brow: 0.1 },
-};
+export type LumenQuality = "low" | "balanced" | "high";
+const INK = "#30392a";
 
-// Shared displacement for the physical surface and the face anchors. Normals
-// are reconstructed on the GPU so reflections follow the sculpted silhouette.
-const sculptGLSL = /* glsl */ `
-  uniform float uLumenTime;
-  uniform float uLumenEnergy;
-  varying vec3 vLumenPosition;
-  vec3 sculptLumen(vec3 p) {
-    float swell = 0.10 * sin(p.y * 2.5 + p.x * 1.6 + uLumenTime * 0.48) * sin(p.z * 2.0 + 1.2);
-    float ripple = 0.035 * sin(p.x * 4.5 - p.y * 2.0 + uLumenTime * 0.7) * sin(p.z * 3.0 + uLumenTime * 0.35);
-    p *= 1.0 + (swell + ripple) * uLumenEnergy;
-    p.x *= 1.08;
-    p.y *= 1.04;
-    p.x += 0.045 * (p.y * p.y - 0.4);
-    return p;
-  }
-`;
-
-function surfacePoint(
-  x: number,
-  y: number,
-  time: number,
-  energy: number,
-  target: THREE.Vector3,
-) {
-  const z = Math.sqrt(Math.max(0.01, 1 - x * x - y * y));
-  const swell =
-    0.1 * Math.sin(y * 2.5 + x * 1.6 + time * 0.48) * Math.sin(z * 2 + 1.2);
-  const ripple =
-    0.035 *
-    Math.sin(x * 4.5 - y * 2 + time * 0.7) *
-    Math.sin(z * 3 + time * 0.35);
-  const radius = 1 + (swell + ripple) * energy;
-  const sy = y * radius * 1.04;
-  return target.set(
-    x * radius * 1.08 + 0.045 * (sy * sy - 0.4),
-    sy,
-    z * radius + 0.032,
-  );
-}
-
-function createPearlMaterial() {
-  const uniforms = {
-    uLumenTime: { value: 0 },
-    uLumenEnergy: { value: 1 },
-    uLumenShadow: { value: new THREE.Color(LUMEN_PALETTE.calm.shadow) },
-    uLumenGlow: { value: new THREE.Color(LUMEN_PALETTE.calm.glow) },
-  };
-  const material = new THREE.MeshPhysicalMaterial({
-    color: LUMEN_PALETTE.calm.body,
-    roughness: 0.27,
-    metalness: 0.06,
-    emissive: LUMEN_PALETTE.calm.body,
-    emissiveIntensity: 0.16,
-    clearcoat: 1,
-    clearcoatRoughness: 0.2,
-    iridescence: 0.4,
-    iridescenceIOR: 1.34,
-    iridescenceThicknessRange: [160, 420],
-    sheen: 0.45,
-    sheenColor: new THREE.Color("#e9edd2"),
-    sheenRoughness: 0.5,
-    envMapIntensity: 1.15,
-  });
-  material.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, uniforms);
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", `#include <common>\n${sculptGLSL}`)
-      .replace(
-        "#include <beginnormal_vertex>",
-        /* glsl */ `
-        vec3 n = normalize(position);
-        vec3 tangent = normalize(cross(n, abs(n.y) > 0.99 ? vec3(1.,0.,0.) : vec3(0.,1.,0.)));
-        vec3 bitangent = normalize(cross(n, tangent));
-        vec3 sculpted = sculptLumen(position);
-        vec3 objectNormal = normalize(cross(
-          sculptLumen(normalize(position + tangent * 0.002)) - sculpted,
-          sculptLumen(normalize(position + bitangent * 0.002)) - sculpted
-        ));
-      `,
-      )
-      .replace(
-        "#include <begin_vertex>",
-        "vec3 transformed = sculpted; vLumenPosition = position;",
-      );
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        "#include <common>",
-        /* glsl */ `
-        #include <common>
-        uniform vec3 uLumenShadow;
-        uniform vec3 uLumenGlow;
-        varying vec3 vLumenPosition;
-      `,
-      )
-      .replace(
-        "#include <color_fragment>",
-        /* glsl */ `
-        #include <color_fragment>
-        float pearl = smoothstep(-0.65, 0.95, vLumenPosition.y + vLumenPosition.x * 0.35);
-        diffuseColor.rgb = mix(uLumenShadow, diffuseColor.rgb, 0.42 + pearl * 0.58);
-        float opal = pow(max(0., sin(vLumenPosition.x * 2.8 + vLumenPosition.y * 2.)), 3.);
-        diffuseColor.rgb = mix(diffuseColor.rgb, uLumenGlow, opal * 0.28);
-      `,
-      );
-  };
-  material.customProgramCacheKey = () => "lumen-pearl-v1";
-  return { material, uniforms };
-}
-
-function makeArc(points: THREE.Vector3[], radius = 0.014) {
+function arc(points: THREE.Vector3[], radius = 0.012) {
   return new THREE.TubeGeometry(
     new THREE.CatmullRomCurve3(points),
     32,
@@ -149,6 +44,8 @@ export function LumenScene({
   gaze,
   reduced,
   active,
+  hero,
+  quality,
 }: {
   mood: LumenMood;
   expression: LumenExpression;
@@ -158,19 +55,22 @@ export function LumenScene({
   gaze: LumenGaze;
   reduced: boolean;
   active: boolean;
+  hero: boolean;
+  quality: LumenQuality;
 }) {
   const root = useRef<THREE.Group>(null);
-  const faceRoot = useRef<THREE.Group>(null);
+  const crown = useRef<THREE.Group>(null);
+  const leftLeaf = useRef<THREE.Group>(null);
+  const rightLeaf = useRef<THREE.Group>(null);
   const leftEye = useRef<THREE.Group>(null);
   const rightEye = useRef<THREE.Group>(null);
   const leftBrow = useRef<THREE.Mesh>(null);
   const rightBrow = useRef<THREE.Mesh>(null);
   const leftCheek = useRef<THREE.Mesh>(null);
   const rightCheek = useRef<THREE.Mesh>(null);
-  const satellites = useRef<THREE.Group>(null);
-  const rippleRing = useRef<THREE.Mesh>(null);
-  const { material, uniforms } = useMemo(createPearlMaterial, []);
-  const targetColors = useMemo(
+  const { material, depthMaterial, uniforms } = useMemo(createSeedMaterial, []);
+  const cotyledons = useMemo(() => createLeafResources(false), []);
+  const colors = useMemo(
     () => ({
       body: new THREE.Color(LUMEN_PALETTE[mood].body),
       shadow: new THREE.Color(LUMEN_PALETTE[mood].shadow),
@@ -178,336 +78,433 @@ export function LumenScene({
     }),
     [mood],
   );
+  const point = useMemo(() => new THREE.Vector3(), []);
   const mouth = useMemo(
     () =>
-      makeArc(
+      arc(
         Array.from(
           { length: 33 },
           (_, i) =>
             new THREE.Vector3(
               (i / 32 - 0.5) * 0.28,
               -0.18 - Math.sin((i / 32) * Math.PI) * 0.05,
-              1,
+              0.9,
             ),
         ),
-        0.016,
+        0.014,
       ),
     [],
   );
   const brow = useMemo(
     () =>
-      makeArc(
+      arc(
         [
-          new THREE.Vector3(-0.085, 0, 0),
-          new THREE.Vector3(0, 0.023, 0),
-          new THREE.Vector3(0.085, 0, 0),
+          new THREE.Vector3(-0.08, 0, 0),
+          new THREE.Vector3(0, 0.018, 0),
+          new THREE.Vector3(0.08, 0, 0),
         ],
-        0.012,
+        0.009,
       ),
     [],
   );
   const happyEye = useMemo(
     () =>
-      makeArc(
+      arc(
         [
-          new THREE.Vector3(-0.073, -0.014, 0.015),
-          new THREE.Vector3(0, 0.035, 0.022),
-          new THREE.Vector3(0.073, -0.014, 0.015),
+          new THREE.Vector3(-0.07, -0.01, 0.025),
+          new THREE.Vector3(0, 0.035, 0.025),
+          new THREE.Vector3(0.07, -0.01, 0.025),
         ],
-        0.023,
+        0.02,
       ),
     [],
   );
-  const animation = useRef({
+  const stalk = useMemo(
+    () =>
+      new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(-0.035, 0.18, 0),
+          new THREE.Vector3(0.035, 0.32, -0.025),
+        ]),
+        18,
+        0.018,
+        7,
+      ),
+    [],
+  );
+  const kinetics = useRef({
+    ...LUMEN_POSES.content,
     time: 0,
-    reactionAge: 10,
-    lastReact: reactKey,
-    lastPulse: pulse,
-    open: 0.7,
-    smile: 0.1,
-    round: 0,
-    tilt: 0,
-    brow: 0,
-    energy: 1,
     gazeX: 0,
     gazeY: 0,
-    nextBlink: 3.2,
+    wave: 0,
+    glow: 0,
+    leafLag: 0.2,
+    reactionAge: 5,
+    lastReact: reactKey,
+    lastPulse: pulse,
+    nextBlink: 2.8,
     blinkAge: 1,
   });
-  const point = useMemo(() => new THREE.Vector3(), []);
+
   useEffect(
     () => () => {
       material.dispose();
+      depthMaterial.dispose();
       mouth.dispose();
       brow.dispose();
       happyEye.dispose();
+      stalk.dispose();
+      disposeLeaves(cotyledons);
     },
-    [material, mouth, brow, happyEye],
+    [material, depthMaterial, mouth, brow, happyEye, stalk, cotyledons],
   );
 
   useFrame((_, rawDelta) => {
     if (!active) return;
     const delta = Math.min(rawDelta, 0.05);
-    const a = animation.current;
+    const a = kinetics.current;
     if (!reduced) a.time += delta;
-    const t = a.time;
-    const ease = reduced ? 1 : 1 - Math.exp(-delta * 5);
-    const face = FACE[expression];
-    a.open = THREE.MathUtils.lerp(a.open, face.open, ease);
-    a.smile = THREE.MathUtils.lerp(a.smile, face.smile, ease);
-    a.round = THREE.MathUtils.lerp(a.round, face.round, ease);
-    a.tilt = THREE.MathUtils.lerp(a.tilt, face.tilt, ease);
-    a.brow = THREE.MathUtils.lerp(a.brow, face.brow, ease);
-    a.energy = THREE.MathUtils.lerp(
-      a.energy,
-      expression === "tender" ? 0.55 : expression === "radiant" ? 1.2 : 1,
-      ease,
-    );
-    a.gazeX = THREE.MathUtils.lerp(a.gazeX, reduced ? 0 : gaze.current.x, ease);
-    a.gazeY = THREE.MathUtils.lerp(a.gazeY, reduced ? 0 : gaze.current.y, ease);
-    const colorEase = reduced ? 1 : ease * 0.5;
-    material.color.lerp(targetColors.body, colorEase);
-    material.emissive.copy(material.color);
-    uniforms.uLumenShadow.value.lerp(targetColors.shadow, colorEase);
-    uniforms.uLumenGlow.value.lerp(targetColors.glow, colorEase);
-    uniforms.uLumenTime.value = t;
-    uniforms.uLumenEnergy.value = a.energy;
+    const pose = LUMEN_POSES[expression];
+    const keys = [
+      "open",
+      "smile",
+      "round",
+      "tilt",
+      "brow",
+      "happy",
+      "energy",
+      "lean",
+      "leafOpen",
+    ] as const;
+    for (const key of keys) {
+      if (reduced) a[key] = pose[key];
+      else damp(a, key, pose[key], key === "leafOpen" ? 0.5 : 0.3, delta);
+    }
+    if (reduced) {
+      a.gazeX = 0;
+      a.gazeY = 0;
+      a.leafLag = a.leafOpen;
+    } else {
+      // The eyes lead; the crown follows more slowly, like a real soft stem.
+      damp(a, "gazeX", gaze.current.x, 0.23, delta);
+      damp(a, "gazeY", gaze.current.y, 0.26, delta);
+      damp(a, "leafLag", a.leafOpen, 0.45, delta);
+    }
+    for (const [uniform, color] of [
+      [uniforms.uBody, colors.body],
+      [uniforms.uShadow, colors.shadow],
+      [uniforms.uGlow, colors.glow],
+    ] as const) {
+      if (reduced) uniform.value.copy(color);
+      else dampC(uniform.value, color, 0.6, delta);
+    }
     if (a.lastReact !== reactKey || a.lastPulse !== pulse) {
       a.lastReact = reactKey;
       a.lastPulse = pulse;
       a.reactionAge = 0;
+      if (!reduced) {
+        a.blinkAge = 0;
+        a.nextBlink = 3.1;
+      }
     }
     a.reactionAge += delta;
-    const age = a.reactionAge;
-    const spring = reduced ? 0 : Math.sin(age * 12) * Math.exp(-age * 4);
-    const bloom = reduced ? 0 : Math.sin(Math.min(1, age / 1.4) * Math.PI);
-    const squeeze =
-      reaction === "squeeze"
-        ? spring * 0.2
-        : reaction === "soften"
-          ? bloom * 0.065
-          : 0;
+    const action = reactionPose(reaction, a.reactionAge);
+    a.wave = reduced ? 0 : action.wave;
+    a.glow = reduced ? 0 : action.glow;
+    uniforms.uTime.value = a.time;
+    uniforms.uEnergy.value = a.energy;
+    uniforms.uLight.value = a.glow;
+
+    const breath = reduced ? 0 : Math.sin(a.time * 0.78) * 0.018;
+    const squash = reduced ? 0 : action.squash;
     if (root.current) {
-      const breath = reduced ? 1 : 1 + Math.sin(t * 1.25) * 0.018;
-      const expand = reaction === "bloom" ? bloom * 0.07 : 0;
-      root.current.scale.set(
-        breath * (1 + squeeze + expand),
-        breath * (1 - squeeze + expand),
-        breath,
+      // Preserve apparent volume when the seed squishes.
+      const vertical = 1 + breath - squash;
+      const horizontal = 1 / Math.sqrt(Math.max(0.7, vertical));
+      root.current.scale.set(horizontal, vertical, horizontal);
+      root.current.position.set(
+        a.gazeX * 0.018,
+        -0.11 + (reduced ? 0 : Math.sin(a.time * 0.68) * 0.025 + action.rise),
+        0.13 + a.lean,
       );
-      root.current.position.y = reduced
-        ? 0
-        : Math.sin(t * 0.8) * 0.055 + (reaction === "bloom" ? bloom * 0.12 : 0);
       root.current.rotation.set(
-        a.gazeY * 0.07 + (reaction === "nod" ? spring * 0.18 : 0),
+        a.gazeY * 0.055 + (reduced ? 0 : action.nod),
         a.gazeX * 0.12,
-        a.tilt + (reduced ? 0 : Math.sin(t * 0.6) * 0.025),
+        a.tilt + (reduced ? 0 : Math.sin(a.time * 0.45) * 0.012),
       );
     }
-    a.nextBlink -= delta;
-    a.blinkAge += delta;
-    if (a.nextBlink < 0 && !reduced) {
-      a.blinkAge = 0;
-      a.nextBlink = 3.1 + Math.sin(t * 1.7) * 1.2;
+    if (crown.current) {
+      seedSurface(0, 0.96, a.time, a.energy, crown.current.position);
+      crown.current.position.z -= 0.15;
+      crown.current.rotation.set(
+        0.04 + a.gazeY * 0.06,
+        -0.08,
+        -a.tilt * 0.5 +
+          (reduced
+            ? 0
+            : Math.sin(a.time * 0.8 - 0.55) * 0.045 + action.squash * -0.7),
+      );
     }
-    const blink =
-      reduced || a.blinkAge > 0.2
-        ? 1
-        : 1 - Math.sin((a.blinkAge / 0.2) * Math.PI) * 0.96;
-    if (faceRoot.current)
-      faceRoot.current.position.set(a.gazeX * 0.045, -a.gazeY * 0.035, 0);
+    if (leftLeaf.current)
+      leftLeaf.current.rotation.set(
+        0.18 +
+          a.leafLag * 0.18 +
+          (reduced ? 0 : Math.sin(a.time * 4) * a.wave * 0.06),
+        -0.25,
+        0.95 + a.leafLag * 0.2,
+      );
+    if (rightLeaf.current)
+      rightLeaf.current.rotation.set(
+        -0.12 -
+          a.leafLag * 0.2 +
+          (reduced ? 0 : Math.sin(a.time * 4 - 0.6) * a.wave * 0.06),
+        0.34,
+        -0.65 - a.leafLag * 0.24,
+      );
+
+    if (!reduced) {
+      a.nextBlink -= delta;
+      a.blinkAge += delta;
+    }
+    if (!reduced && a.nextBlink <= 0) {
+      a.blinkAge = 0;
+      a.nextBlink = 3.4 + Math.sin(a.time * 1.3) * 1.05;
+    }
+    const blink = reduced ? 1 : blinkOpenness(a.blinkAge);
+    const gx = a.gazeX * 0.04;
+    const gy = -a.gazeY * 0.028;
     [leftEye.current, rightEye.current].forEach((eye, index) => {
       if (!eye) return;
-      const side = index === 0 ? -1 : 1;
-      surfacePoint(side * 0.285, 0.075, t, a.energy, eye.position);
-      eye.children[0].visible = expression !== "radiant";
-      eye.children[1].visible = expression === "radiant";
-      eye.children[0].scale.y = Math.max(
-        0.045,
-        a.open * blink * (expression === "curious" && side === 1 ? 0.84 : 1),
+      const side = index ? 1 : -1;
+      seedSurface(
+        side * 0.275 + gx,
+        0.045 + gy,
+        a.time,
+        a.energy,
+        eye.position,
       );
-      eye.rotation.z = expression === "tender" ? side * -0.13 : 0;
+      eye.rotation.y = side * 0.12;
+      eye.rotation.z = expression === "tender" ? side * -0.1 : 0;
+      eye.children[0].scale.y = Math.max(
+        0.015,
+        a.open *
+          blink *
+          (1 - a.happy) *
+          (expression === "curious" && side === 1 ? 0.84 : 1),
+      );
+      eye.children[0].visible = a.happy < 0.985;
+      eye.children[1].visible = a.happy > 0.02;
+      eye.children[1].scale.y = Math.max(0.01, a.happy);
     });
     [leftBrow.current, rightBrow.current].forEach((mesh, index) => {
       if (!mesh) return;
-      const side = index === 0 ? -1 : 1;
-      surfacePoint(
-        side * 0.285,
-        0.32 + (expression === "curious" && side === -1 ? 0.06 : 0),
-        t,
+      const side = index ? 1 : -1;
+      seedSurface(
+        side * 0.275 + gx,
+        0.27 + gy + (expression === "curious" && side === -1 ? 0.045 : 0),
+        a.time,
         a.energy,
         mesh.position,
       );
       mesh.rotation.z = side * a.brow;
     });
     [leftCheek.current, rightCheek.current].forEach((mesh, index) => {
-      if (mesh)
-        surfacePoint(
-          index === 0 ? -0.49 : 0.49,
-          -0.115,
-          t,
-          a.energy,
-          mesh.position,
-        );
+      if (!mesh) return;
+      const side = index ? 1 : -1;
+      seedSurface(
+        side * 0.46 + gx,
+        -0.14 + gy,
+        a.time,
+        a.energy,
+        mesh.position,
+      );
+      mesh.rotation.y = side * 0.32;
     });
-    // Morph a single preallocated lip mesh; it stays anchored to the skin.
-    const vertices = mouth.attributes.position as THREE.BufferAttribute;
-    const width = expression === "radiant" ? 0.19 : 0.135;
+    const positions = mouth.attributes.position as THREE.BufferAttribute;
+    const width = 0.135 + a.happy * 0.03;
     for (let segment = 0; segment <= 32; segment++) {
       const u = segment / 32;
-      surfacePoint(
-        (u - 0.5) * width * 2,
-        -0.18 - Math.sin(u * Math.PI) * a.smile,
-        t,
+      seedSurface(
+        (u - 0.5) * width * 2 + gx,
+        -0.19 - Math.sin(u * Math.PI) * a.smile + gy,
+        a.time,
         a.energy,
         point,
       );
       for (let radial = 0; radial <= 8; radial++) {
         const angle = (radial / 8) * Math.PI * 2;
-        vertices.setXYZ(
+        positions.setXYZ(
           segment * 9 + radial,
           point.x,
-          point.y + Math.cos(angle) * (0.016 + a.round * Math.sin(u * Math.PI)),
-          point.z + 0.012 + Math.sin(angle) * 0.016,
+          point.y + Math.cos(angle) * (0.014 + a.round * Math.sin(u * Math.PI)),
+          point.z + 0.009 + Math.sin(angle) * 0.014,
         );
       }
     }
-    vertices.needsUpdate = true;
-    if (satellites.current && !reduced)
-      satellites.current.children.forEach((satellite, i) => {
-        satellite.position.y = Math.sin(t * 0.65 + i * 2) * 0.07;
-        satellite.rotation.y += delta * 0.14;
-      });
-    if (rippleRing.current) {
-      rippleRing.current.visible = !reduced && age < 1.4 && reaction !== "none";
-      if (rippleRing.current.visible) {
-        rippleRing.current.scale.setScalar(1 + age * 0.7);
-        (rippleRing.current.material as THREE.MeshBasicMaterial).opacity =
-          (1 - age / 1.4) * 0.22;
-      }
-    }
+    positions.needsUpdate = true;
   });
 
   return (
     <>
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[-3, 5, 4]} intensity={2.3} color="#fff4e9" />
-      <pointLight position={[3, -1, 2]} intensity={4} color="#e0e8bd" />
-      {/* Local studio lighting: no HDR download or third-party asset dependency. */}
+      <ambientLight intensity={0.65} />
+      <directionalLight
+        position={[-3.5, 5, 5]}
+        intensity={2.4}
+        color="#fff3df"
+        castShadow={quality !== "low"}
+        shadow-mapSize={[
+          quality === "high" ? 1024 : 512,
+          quality === "high" ? 1024 : 512,
+        ]}
+        shadow-camera-left={-3}
+        shadow-camera-right={3}
+        shadow-camera-top={3}
+        shadow-camera-bottom={-3}
+        shadow-camera-near={0.5}
+        shadow-camera-far={14}
+        shadow-bias={-0.0005}
+        shadow-normalBias={0.025}
+        shadow-radius={3}
+      />
+      <directionalLight position={[3, 1, -3]} intensity={1.6} color="#dceab5" />
       <Environment resolution={128} frames={1}>
         <Lightformer
           position={[-3, 3, 4]}
           scale={[3, 5, 1]}
-          intensity={3.5}
-          color="#fff9f4"
+          intensity={3}
+          color="#fff8eb"
           target={[0, 0, 0]}
         />
         <Lightformer
           position={[4, 1, 2]}
-          scale={[1, 4, 1]}
-          intensity={2}
-          color="#dce9c8"
+          scale={[0.8, 4, 1]}
+          intensity={2.2}
+          color="#dfebc8"
           target={[0, 0, 0]}
         />
         <Lightformer
           position={[0, -3, 1]}
           scale={[4, 1, 1]}
-          intensity={1.2}
-          color="#bdf4e0"
+          intensity={0.9}
+          color="#dae5bc"
           target={[0, 0, 0]}
         />
       </Environment>
-      <group ref={root}>
-        <mesh material={material}>
-          <sphereGeometry args={[1, 96, 64]} />
+      <group ref={root} position={[0, -0.11, 0.13]}>
+        <mesh
+          material={material}
+          customDepthMaterial={depthMaterial}
+          castShadow
+          receiveShadow
+        >
+          <sphereGeometry
+            args={[1, quality === "low" ? 48 : 80, quality === "low" ? 32 : 56]}
+          />
         </mesh>
-        <group ref={faceRoot}>
-          <Eye eyeRef={leftEye} happyGeometry={happyEye} />
-          <Eye eyeRef={rightEye} happyGeometry={happyEye} />
-          <mesh ref={leftBrow} geometry={brow}>
-            <meshBasicMaterial color={INK} transparent opacity={0.65} />
+        <group ref={crown} position={[0, 1, 0]}>
+          <mesh geometry={stalk} castShadow>
+            <meshStandardMaterial color="#74865c" roughness={0.48} />
           </mesh>
-          <mesh ref={rightBrow} geometry={brow}>
-            <meshBasicMaterial color={INK} transparent opacity={0.65} />
-          </mesh>
-          <mesh geometry={mouth}>
-            <meshBasicMaterial color={INK} />
-          </mesh>
-          <mesh ref={leftCheek} scale={[0.12, 0.055, 0.015]}>
-            <sphereGeometry args={[1, 24, 16]} />
-            <meshBasicMaterial
-              color={LUMEN_PALETTE[mood].blush}
-              transparent
-              opacity={0.6}
-              depthWrite={false}
+          <group
+            ref={leftLeaf}
+            position={[0.005, 0.23, -0.015]}
+            scale={[0.44, 0.5, 0.5]}
+            rotation={[0.18, -0.25, 1]}
+          >
+            <CrownLeaf resources={cotyledons} />
+          </group>
+          <group
+            ref={rightLeaf}
+            position={[0.025, 0.29, -0.025]}
+            scale={[0.43, 0.56, 0.5]}
+            rotation={[-0.12, 0.34, -0.7]}
+          >
+            <CrownLeaf resources={cotyledons} />
+          </group>
+          <mesh position={[-0.29, 0.46, 0.09]} scale={0.025}>
+            <sphereGeometry args={[1, 16, 12]} />
+            <meshPhysicalMaterial
+              color="#eff1d2"
+              clearcoat={1}
+              roughness={0.08}
             />
           </mesh>
-          <mesh ref={rightCheek} scale={[0.12, 0.055, 0.015]}>
-            <sphereGeometry args={[1, 24, 16]} />
-            <meshBasicMaterial
-              color={LUMEN_PALETTE[mood].blush}
-              transparent
-              opacity={0.6}
-              depthWrite={false}
-            />
-          </mesh>
         </group>
+        <Eye eyeRef={leftEye} happyGeometry={happyEye} />
+        <Eye eyeRef={rightEye} happyGeometry={happyEye} />
+        <mesh ref={leftBrow} geometry={brow}>
+          <meshBasicMaterial color={INK} transparent opacity={0.7} />
+        </mesh>
+        <mesh ref={rightBrow} geometry={brow}>
+          <meshBasicMaterial color={INK} transparent opacity={0.7} />
+        </mesh>
+        <mesh geometry={mouth}>
+          <meshBasicMaterial color={INK} />
+        </mesh>
+        <Cheek cheekRef={leftCheek} color={LUMEN_PALETTE[mood].blush} />
+        <Cheek cheekRef={rightCheek} color={LUMEN_PALETTE[mood].blush} />
       </group>
-      <group ref={satellites}>
-        <group>
-          <Pearl
-            position={[-1.43, 0.65, -0.3]}
-            scale={0.12}
-            color={LUMEN_PALETTE[mood].body}
-          />
-        </group>
-        <group>
-          <Pearl
-            position={[1.38, -0.38, 0.15]}
-            scale={0.075}
-            color={LUMEN_PALETTE[mood].glow}
-          />
-        </group>
-        <group>
-          <Pearl
-            position={[0.94, 1.18, -0.45]}
-            scale={0.045}
-            color={LUMEN_PALETTE[mood].body}
-          />
-        </group>
-      </group>
-      <mesh ref={rippleRing} position={[0, 0, -0.5]} visible={false}>
-        <ringGeometry args={[1.25, 1.258, 100]} />
-        <meshBasicMaterial
-          color={LUMEN_PALETTE[mood].shadow}
-          transparent
-          opacity={0}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-        />
-      </mesh>
+      {hero && (
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, -1.86, 0]}
+          receiveShadow
+        >
+          <planeGeometry args={[10, 10]} />
+          <shadowMaterial transparent opacity={0.16} depthWrite={false} />
+        </mesh>
+      )}
     </>
   );
 }
 
-function Pearl({
-  position,
-  scale,
+function CrownLeaf({ resources }: { resources: LeafResources }) {
+  return (
+    <group dispose={null}>
+      <mesh
+        geometry={resources.geometry}
+        material={resources.material}
+        castShadow
+        receiveShadow
+      />
+      <mesh geometry={resources.veins} material={resources.veinMaterial} />
+    </group>
+  );
+}
+
+function Cheek({
+  cheekRef,
   color,
 }: {
-  position: [number, number, number];
-  scale: number;
+  cheekRef: RefObject<THREE.Mesh>;
   color: string;
 }) {
+  const uniforms = useMemo(
+    () => ({ uColor: { value: new THREE.Color(color) } }),
+    [color],
+  );
   return (
-    <mesh position={position} scale={scale}>
-      <sphereGeometry args={[1, 24, 24]} />
-      <meshPhysicalMaterial
-        color={color}
-        metalness={0.2}
-        roughness={0.15}
-        clearcoat={1}
-        iridescence={0.8}
+    <mesh ref={cheekRef} scale={[0.15, 0.075, 1]}>
+      <planeGeometry args={[2, 2]} />
+      <shaderMaterial
+        transparent
+        depthWrite={false}
+        uniforms={uniforms}
+        vertexShader="varying vec2 vUV; void main() { vUV=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }"
+        fragmentShader={
+          /* glsl */ `
+        varying vec2 vUV;
+        uniform vec3 uColor;
+        void main() {
+          float a = 1. - smoothstep(.12,.5,length(vUV-.5));
+          gl_FragColor = vec4(uColor,a*.34);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }
+      `
+        }
       />
     </mesh>
   );
@@ -517,28 +514,28 @@ function Eye({
   eyeRef,
   happyGeometry,
 }: {
-  eyeRef: React.RefObject<THREE.Group>;
+  eyeRef: RefObject<THREE.Group>;
   happyGeometry: THREE.TubeGeometry;
 }) {
   return (
     <group ref={eyeRef}>
       <group>
-        <mesh scale={[0.085, 0.125, 0.048]}>
-          <sphereGeometry args={[1, 32, 24]} />
+        <mesh scale={[0.079, 0.111, 0.043]}>
+          <sphereGeometry args={[1, 24, 20]} />
           <meshPhysicalMaterial
             color={INK}
-            roughness={0.18}
+            roughness={0.16}
             clearcoat={1}
-            envMapIntensity={0.7}
+            envMapIntensity={0.6}
           />
         </mesh>
-        <mesh position={[-0.026, 0.047, 0.042]} scale={[0.022, 0.03, 0.01]}>
-          <sphereGeometry args={[1, 16, 12]} />
-          <meshBasicMaterial color="#fff9fc" />
+        <mesh position={[-0.024, 0.039, 0.037]} scale={[0.018, 0.023, 0.009]}>
+          <sphereGeometry args={[1, 12, 10]} />
+          <meshBasicMaterial color="#fffbed" />
         </mesh>
-        <mesh position={[0.025, -0.037, 0.044]} scale={0.01}>
-          <sphereGeometry args={[1, 12, 12]} />
-          <meshBasicMaterial color="#c5b4ed" />
+        <mesh position={[0.022, -0.032, 0.041]} scale={0.008}>
+          <sphereGeometry args={[1, 10, 8]} />
+          <meshBasicMaterial color="#c8d7b5" />
         </mesh>
       </group>
       <mesh geometry={happyGeometry} visible={false}>

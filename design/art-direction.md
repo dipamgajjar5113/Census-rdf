@@ -18,6 +18,11 @@ contact shadow, and gentle counter-parallax. Pointer movement updates motion
 values, without re-rendering React every frame. Reduced motion and pause remove
 the parallax as well as the character's idle animation.
 
+The final character is a living jade seed with a warm seam, subtle growth grain,
+and a flexible two-leaf crown. Its photographic eucalyptus backdrop is retained.
+The material and pose rig use Custom Shader Material and maath; the research,
+library comparisons, and verification approach are in `design/lumen-research.md`.
+
 ## Artwork
 
 - Production: `public/images/eucalyptus-wreath.webp` (410,376 bytes, alpha retained).

@@ -519,6 +519,43 @@ h1[tabindex="-1"]:focus {
   display: block;
   pointer-events: none;
 }
+.lumen[data-ready="true"] .lumen-contact-shadow,
+.lumen[data-ready="true"] .lumen-floor {
+  opacity: 0;
+  visibility: hidden;
+}
+.lumen-wreath-plane {
+  transition: opacity 0.45s;
+}
+.lumen-fallback-sprout {
+  position: absolute;
+  left: 49%;
+  top: -13%;
+  width: 3%;
+  height: 17%;
+  border-radius: 50%;
+  background: #8f9f71;
+  transform: rotate(-10deg);
+}
+.lumen-fallback-sprout::before,
+.lumen-fallback-sprout::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  width: 420%;
+  height: 110%;
+  background: linear-gradient(140deg, #d6dfb7, #859a66);
+  border-radius: 6% 90% 12% 90%;
+  transform-origin: right bottom;
+}
+.lumen-fallback-sprout::before {
+  right: 30%;
+  transform: rotate(-20deg);
+}
+.lumen-fallback-sprout::after {
+  left: 30%;
+  transform: scaleX(-1) rotate(-40deg);
+}
 .lumen-touch {
   position: absolute;
   inset: 20% 18%;

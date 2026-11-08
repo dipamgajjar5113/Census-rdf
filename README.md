@@ -12,13 +12,15 @@ One question at a time, with native keyboard controls and normal page scrolling.
 
 - **Welcome → 6 questions (one at a time) → thank-you**, with directional
   crossfade transitions and a segmented, rewarding progress rail.
-- **Lumen**, a sculpted, pearlescent 3D companion with local studio lighting,
+- **Lumen**, a sculpted jade seed with a flexible leaf crown, a photographic
+  eucalyptus wreath, custom surface shading, and local studio lighting,
   pointer-following eyes, blinking, expressive brows, and a morphing smile.
   Explore four emotions on the welcome screen; during the survey it settles
   into a smaller companion and responds with distinct nods, softening, blooms,
   and touch-triggered squishes. The WebGL scene loads separately, pauses when
   hidden, and uses a static frame for reduced motion or the pause control.
   An expressive CSS portrait covers loading, unavailable WebGL, and context loss.
+  See `design/lumen-research.md` for the source research and library decisions.
 - **Dashboard** (`/dashboard`): password-gated census with headline insights,
   per-question breakdowns, anonymous coping goals, and CSV export. Small samples
   (< 5) are suppressed to protect anonymity.
