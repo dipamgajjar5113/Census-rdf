@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Lora, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { LumenProvider } from "@/components/lumen/LumenProvider";
-import { DashboardLumen } from "@/components/lumen/Lumen";
 import { SiteChrome } from "@/components/SiteChrome";
 
 const lora = Lora({
@@ -28,7 +27,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f6f3eb",
+  themeColor: "#f3f2eb",
   viewportFit: "cover",
 };
 
@@ -53,8 +52,9 @@ export default function RootLayout({
             Skip to content
           </a>
           <SiteChrome />
-          <DashboardLumen />
-          <div id="main">{children}</div>
+          <div id="main" tabIndex={-1}>
+            {children}
+          </div>
         </LumenProvider>
       </body>
     </html>

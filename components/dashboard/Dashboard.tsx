@@ -12,6 +12,12 @@ import {
   Trash2,
   LogOut,
   Check,
+  ChartNoAxesCombined,
+  ListFilter,
+  Sprout,
+  Leaf,
+  Info,
+  LockKeyhole,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/states";
@@ -24,11 +30,11 @@ import type { CheckinRecord, QuestionId, Summary } from "@/lib/types";
 
 type Tab = "census" | "details" | "goals";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "census", label: "Census" },
-  { id: "details", label: "Details" },
-  { id: "goals", label: "Goals" },
-];
+const TABS = [
+  { id: "census", label: "Overview", icon: ChartNoAxesCombined },
+  { id: "details", label: "Breakdown", icon: ListFilter },
+  { id: "goals", label: "Intentions", icon: Sprout },
+] as const;
 
 export function Dashboard({
   records,
@@ -67,8 +73,12 @@ export function Dashboard({
     const stressTotal = high + mod + low;
 
     return {
-      stressorPct: stressorAnswered ? Math.round((correctStressor / stressorAnswered) * 100) : 0,
-      signsPct: signsAnswered ? Math.round((correctSigns / signsAnswered) * 100) : 0,
+      stressorPct: stressorAnswered
+        ? Math.round((correctStressor / stressorAnswered) * 100)
+        : 0,
+      signsPct: signsAnswered
+        ? Math.round((correctSigns / signsAnswered) * 100)
+        : 0,
       highPct: stressTotal ? Math.round((high / stressTotal) * 100) : 0,
       modPct: stressTotal ? Math.round((mod / stressTotal) * 100) : 0,
       lowPct: stressTotal ? Math.round((low / stressTotal) * 100) : 0,
@@ -97,60 +107,100 @@ export function Dashboard({
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-24 pb-20 sm:px-6">
+    <main className="dashboard-shell">
       {/* Header */}
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="dashboard-heading">
         <div>
-          <h1 className="font-serif text-3xl tracking-tight text-fg sm:text-4xl">
-            The Census
-          </h1>
-          <p className="mt-1 text-sm text-muted-fg">
-            Aggregate results across everyone who checked in — counts only, never
-            individual answers.
-            {summary.updatedAt && (
-              <span className="ml-1 text-muted-fg/70">
-                Updated {new Date(summary.updatedAt).toLocaleString()}
-              </span>
-            )}
+          <p className="eyebrow">
+            <Leaf size={15} strokeWidth={1.4} /> THE COMMUNITY CENSUS
           </p>
+          <h1>
+            A picture of <em>our community.</em>
+          </h1>
+          <p className="dashboard-description">
+            Small check-ins, shared understanding. A thoughtful view of how
+            everyone is feeling.
+          </p>
+          {summary.updatedAt && (
+            <p className="dashboard-updated">
+              <span className="lumen-live-dot" />
+              Updated {new Date(summary.updatedAt).toLocaleString()}
+            </p>
+          )}
         </div>
-        <Button variant="ghost" size="sm" onClick={onLogout}>
+        <Button
+          variant="soft"
+          size="sm"
+          onClick={onLogout}
+          aria-label="Sign out of the organizer dashboard"
+        >
           <LogOut size={15} aria-hidden="true" /> Sign out
         </Button>
       </div>
 
       {!configured && (
-        <div className="mb-6 rounded-2xl border border-border bg-muted/60 p-4 text-sm text-muted-fg">
-          Supabase isn't configured on this deployment, so there are no stored
-          responses to show yet. The participant survey still works fully offline.
+        <div className="dashboard-notice" role="status">
+          <Info size={19} strokeWidth={1.5} aria-hidden="true" />
+          <p>
+            Response collection isn’t connected yet. Participants can still
+            complete a check-in and save their answers on this device.
+          </p>
         </div>
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard icon={Users} value={total} label="Check-ins" sub="total responses" delay={0} />
-        <StatCard icon={Brain} value={`${insights.stressorPct}%`} label="Identified stressor" sub="quiz 1 correct" delay={0.05} accent />
-        <StatCard icon={HeartPulse} value={`${insights.signsPct}%`} label="Signs ≠ diagnosis" sub="quiz 2 correct" delay={0.1} accent />
-        <StatCard icon={Target} value={summary.goals} label="Goals set" sub="coping intentions" delay={0.15} />
+      <div className="dashboard-stats">
+        <StatCard
+          icon={Users}
+          value={total}
+          label="Check-ins"
+          sub="total responses"
+          delay={0}
+        />
+        <StatCard
+          icon={Brain}
+          value={`${insights.stressorPct}%`}
+          label="Identified stressor"
+          sub="quiz 1 correct"
+          delay={0.05}
+          accent
+        />
+        <StatCard
+          icon={HeartPulse}
+          value={`${insights.signsPct}%`}
+          label="Signs ≠ diagnosis"
+          sub="quiz 2 correct"
+          delay={0.1}
+          accent
+        />
+        <StatCard
+          icon={Target}
+          value={summary.goals}
+          label="Goals set"
+          sub="coping intentions"
+          delay={0.15}
+        />
       </div>
 
       {/* Tabs */}
-      <div className="mt-8 flex gap-1 rounded-2xl border border-border bg-card/60 p-1">
+      <div className="dashboard-tabs" role="group" aria-label="Census views">
         {TABS.map((t) => (
           <button
             key={t.id}
+            type="button"
             onClick={() => setTab(t.id)}
-            className="relative flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+            className="dashboard-tab"
             aria-pressed={tab === t.id}
           >
             {tab === t.id && (
               <motion.span
                 layoutId="tab-pill"
-                className="absolute inset-0 rounded-xl bg-primary shadow-soft"
+                className="dashboard-tab-pill"
                 transition={{ type: "spring", stiffness: 350, damping: 30 }}
               />
             )}
-            <span className={`relative z-10 ${tab === t.id ? "text-on-primary" : "text-muted-fg"}`}>
+            <span className="dashboard-tab-label">
+              <t.icon size={17} strokeWidth={1.6} aria-hidden="true" />
               {t.label}
             </span>
           </button>
@@ -158,7 +208,7 @@ export function Dashboard({
       </div>
 
       {/* Panels */}
-      <div className="mt-6">
+      <div className="dashboard-content">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
@@ -178,34 +228,59 @@ export function Dashboard({
 
       {/* Data tools */}
       {total > 0 && (
-        <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-border pt-6">
+        <div className="dashboard-data-tools">
           <Button variant="soft" size="sm" onClick={exportCsv}>
             <Download size={15} aria-hidden="true" /> Export CSV
           </Button>
           <Button variant="soft" size="sm" onClick={copyCsv}>
-            {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+            {copied ? (
+              <Check size={15} aria-hidden="true" />
+            ) : (
+              <Copy size={15} aria-hidden="true" />
+            )}
             {copied ? "Copied" : "Copy CSV"}
           </Button>
           <div className="ml-auto">
             {confirmClear ? (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-destructive">Clear all data?</span>
-                <Button variant="danger" size="sm" onClick={() => { onClear(); setConfirmClear(false); }}>
+                <span className="text-sm text-destructive">
+                  Clear all data?
+                </span>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => {
+                    onClear();
+                    setConfirmClear(false);
+                  }}
+                >
                   Yes, clear
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setConfirmClear(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmClear(false)}
+                >
                   Cancel
                 </Button>
               </div>
             ) : (
-              <Button variant="ghost" size="sm" onClick={() => setConfirmClear(true)} className="text-destructive">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmClear(true)}
+                className="text-destructive"
+              >
                 <Trash2 size={15} aria-hidden="true" /> Clear census
               </Button>
             )}
           </div>
         </div>
       )}
-    </div>
+      <footer className="dashboard-footer">
+        <ShieldNotice /> Community care starts with listening.
+      </footer>
+    </main>
   );
 }
 
@@ -257,25 +332,53 @@ function CensusPanel({
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-        <h2 className="font-serif text-lg text-fg">Stress distribution</h2>
-        <div className="mt-4 space-y-2">
-          <BarRow label="High stress" count={insights.highPct} total={100} highlight={false} delay={0} />
-          <BarRow label="Moderate" count={insights.modPct} total={100} delay={0.08} />
-          <BarRow label="Low stress" count={insights.lowPct} total={100} highlight delay={0.16} />
+    <div className="census-panels">
+      <section className="dashboard-panel">
+        <p className="panel-eyebrow">HOW WE’RE FEELING</p>
+        <h2>Stress distribution</h2>
+        <div className="dashboard-chart">
+          <BarRow
+            label="High stress"
+            count={insights.highPct}
+            total={100}
+            highlight={false}
+            delay={0}
+            percentageOnly
+          />
+          <BarRow
+            label="Moderate"
+            count={insights.modPct}
+            total={100}
+            delay={0.08}
+            percentageOnly
+          />
+          <BarRow
+            label="Low stress"
+            count={insights.lowPct}
+            total={100}
+            highlight
+            delay={0.16}
+            percentageOnly
+          />
         </div>
-        <p className="mt-2 text-xs text-muted-fg">Shown as share of those who answered the stress question.</p>
-      </div>
+        <p className="panel-footnote">
+          Share of participants who answered the stress question.
+        </p>
+      </section>
 
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-        <h2 className="font-serif text-lg text-fg">What this tells us</h2>
-        <ul className="mt-3 space-y-3">
+      <section className="dashboard-panel dashboard-panel--insights">
+        <p className="panel-eyebrow">A LITTLE PERSPECTIVE</p>
+        <h2>What this tells us</h2>
+        <ul className="dashboard-takeaways">
           {takeaways.map((t, i) => (
             <li key={i} className="flex items-start gap-3 text-sm text-fg">
               <span
                 className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                  t.tone === "good" ? "bg-accent" : t.tone === "warn" ? "bg-destructive" : "bg-primary"
+                  t.tone === "good"
+                    ? "bg-accent"
+                    : t.tone === "warn"
+                      ? "bg-destructive"
+                      : "bg-primary"
                 }`}
                 aria-hidden="true"
               />
@@ -283,7 +386,7 @@ function CensusPanel({
             </li>
           ))}
         </ul>
-      </div>
+      </section>
     </div>
   );
 }
@@ -291,20 +394,24 @@ function CensusPanel({
 function DetailsPanel({ summary }: { summary: Summary }) {
   const counted = QUESTIONS.filter((q) => q.type !== "text");
   if (summary.total === 0) {
-    return <EmptyState title="Nothing to break down yet" message="Per-question results appear once responses come in." />;
+    return (
+      <EmptyState
+        title="Nothing to break down yet"
+        message="Per-question results appear once responses come in."
+      />
+    );
   }
   return (
-    <div className="space-y-5">
+    <div className="dashboard-breakdown">
       {counted.map((q) => {
         const qs = summary.questions[q.id as QuestionId];
         if (!qs) return null;
         const maxCount = Math.max(1, ...Object.values(qs.counts));
         return (
-          <div key={q.id} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-            <div className="flex items-baseline justify-between gap-2">
-              <h3 className="font-serif text-base text-fg">{q.prompt}</h3>
-            </div>
-            <div className="mt-4 space-y-1">
+          <section key={q.id} className="dashboard-panel">
+            <p className="panel-eyebrow">{q.title}</p>
+            <h2>{q.prompt}</h2>
+            <div className="dashboard-chart">
               {q.options!.map((opt, i) => (
                 <BarRow
                   key={opt.value}
@@ -316,11 +423,15 @@ function DetailsPanel({ summary }: { summary: Summary }) {
                 />
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted-fg">
+            <p className="panel-footnote">
               {qs.answered} answered · {qs.skipped} skipped
-              {q.correct && <span className="ml-1 text-accent">· correct answer highlighted</span>}
+              {q.correct && (
+                <span className="ml-1 text-accent">
+                  · correct answer highlighted
+                </span>
+              )}
             </p>
-          </div>
+          </section>
         );
       })}
     </div>
@@ -328,24 +439,41 @@ function DetailsPanel({ summary }: { summary: Summary }) {
 }
 
 function GoalsPanel({ records }: { records: CheckinRecord[] }) {
-  const goals = records.map((r) => r.goal).filter((g): g is string => Boolean(g && g.trim()));
+  const goals = records
+    .map((r) => r.goal)
+    .filter((g): g is string => Boolean(g && g.trim()));
   if (goals.length === 0) {
-    return <EmptyState title="No coping goals shared yet" message="Anonymous coping goals that participants choose to share will appear here." />;
+    return (
+      <EmptyState
+        title="No coping goals shared yet"
+        message="Anonymous coping goals that participants choose to share will appear here."
+      />
+    );
   }
   return (
-    <div className="columns-1 gap-4 sm:columns-2">
+    <div className="dashboard-goals">
       {goals.map((g, i) => (
         <motion.blockquote
           key={i}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: Math.min(i * 0.03, 0.4) }}
-          className="mb-4 break-inside-avoid rounded-2xl border border-border bg-card p-4 text-sm leading-relaxed text-fg shadow-soft"
+          className="dashboard-goal"
         >
-          <span className="font-serif text-2xl leading-none text-primary/40">&ldquo;</span>
-          <p className="mt-1">{g}</p>
+          <Sprout size={20} strokeWidth={1.4} aria-hidden="true" />
+          <p>{g}</p>
+          <span>ONE SMALL INTENTION</span>
         </motion.blockquote>
       ))}
     </div>
+  );
+}
+
+function ShieldNotice() {
+  return (
+    <span className="dashboard-privacy">
+      <LockKeyhole size={14} strokeWidth={1.5} aria-hidden="true" /> Anonymous
+      by design.
+    </span>
   );
 }

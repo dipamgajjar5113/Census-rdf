@@ -78,18 +78,13 @@ export function MultiInput({
           return (
             <motion.button
               key={opt.value}
+              type="button"
               onClick={() => toggle(opt.value)}
               aria-pressed={isSel}
+              data-selected={isSel}
               disabled={blocked}
               whileTap={reduced ? undefined : { scale: blocked ? 1 : 0.98 }}
-              className={clsx(
-                "multi-option flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition-all duration-200 ease-soft-out cursor-pointer",
-                isSel
-                  ? "border-primary bg-primary/10 shadow-soft"
-                  : "border-border bg-card hover:border-primary/40 hover:shadow-soft",
-                blocked &&
-                  "cursor-not-allowed opacity-50 hover:border-border hover:shadow-none",
-              )}
+              className={clsx("multi-option", blocked && "opacity-50")}
             >
               {Icon && (
                 <Icon

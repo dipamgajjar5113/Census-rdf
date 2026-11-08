@@ -9,28 +9,31 @@ export function BarRow({
   total,
   highlight = false,
   delay = 0,
+  percentageOnly = false,
 }: {
   label: string;
   count: number;
   total: number;
   highlight?: boolean;
   delay?: number;
+  percentageOnly?: boolean;
 }) {
   const reduced = useReducedMotion() ?? false;
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
-    <div className="flex items-center gap-3 py-1.5">
-      <div className="w-32 shrink-0 text-sm text-fg sm:w-40">{label}</div>
-      <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-muted">
+    <div className="bar-row">
+      <div className="bar-label">{label}</div>
+      <div className="bar-value tnum">
+        {percentageOnly ? `${count}%` : `${count} · ${Math.round(pct)}%`}
+      </div>
+      <div className="bar-track">
         <motion.div
-          className={`h-full rounded-lg ${highlight ? "bg-accent" : "bg-primary"}`}
+          className="bar-fill"
+          data-highlight={highlight}
           initial={reduced ? false : { width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
         />
-      </div>
-      <div className="tnum w-20 shrink-0 text-right text-sm text-muted-fg">
-        {count} · {Math.round(pct)}%
       </div>
     </div>
   );

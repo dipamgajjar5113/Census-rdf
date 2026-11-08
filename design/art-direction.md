@@ -1,15 +1,32 @@
 # Stress Management — botanical retreat
 
 The project's physical eucalyptus-and-timber sign is the visual reference. The
-app uses warm parchment, deep olive ink, sage surfaces, subtle grain, natural
-leaf shadows, Lora's gentle italic forms, and readable DM Sans interface text.
+app uses warm parchment (`#F3F2EB`), deep forest ink, sage surfaces, subtle grain,
+natural leaf shadows, Lora's gentle italic forms, and readable DM Sans interface text.
 Dark mode is a forest-green palette with the same hierarchy.
+
+## Surface and layout system
+
+The parchment ground, opaque ivory cards, and inset sage controls form three
+distinct surface levels. Shared shadow tokens combine a narrow contact shadow,
+a soft cast shadow, and an inner highlight; dark mode uses its own shadow values.
+Borders remain visible around forms and controls in both themes. Primary actions
+have consistent heights, inset highlights, and clear pressed and disabled states.
+
+The welcome view pairs editorial copy and an immediately available start action
+with Lumen's framed botanical portrait. Three full-width journey cards explain
+Notice, Reflect, and Care below. On phones these become a single column, with
+the start action before the artwork. The survey companion has a separate paper
+surface on desktop and becomes an inline row below 850px. Content always uses
+normal document scrolling. The organizer login uses a two-column introduction
+and form; dashboard metrics, charts, and intention cards share the same surfaces.
+Chart labels and values sit above their tracks so long labels fit narrow screens.
 
 The survey uses normal document scrolling, native keyboard-operable radio
 controls, clearly described selection limits, visible focus, optional questions,
 and layouts for narrow phones, landscape phones, tablets, and larger screens.
 Lumen stays mounted between survey views. On phones the welcome introduction,
-companion, and start action form one vertical composition; during questions the
+start action, and companion form one vertical composition; during questions the
 companion becomes a compact row rather than covering the form.
 
 The wreath is a separate, slightly tilted rear plane with soft leaf shadows.

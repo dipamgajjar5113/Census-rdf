@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Leaf } from "lucide-react";
-import { WelcomeScreen } from "./survey/WelcomeScreen";
+import { WelcomeJourney, WelcomeScreen } from "./survey/WelcomeScreen";
 import { QuestionScreen } from "./survey/QuestionScreen";
 import { ThanksScreen } from "./survey/ThanksScreen";
 import { useLumen } from "./lumen/LumenProvider";
@@ -189,6 +189,12 @@ export function SurveyApp() {
   return (
     <main className="survey-experience" data-view={view}>
       <div className="experience-art">
+        {view !== "welcome" && (
+          <div className="companion-heading">
+            <span className="lumen-live-dot" /> HERE WITH YOU
+            <Leaf size={15} strokeWidth={1.4} aria-hidden="true" />
+          </div>
+        )}
         <Lumen presentation={view === "welcome" ? "hero" : "companion"} />
         {view !== "welcome" && (
           <div className="companion-note">
@@ -269,6 +275,7 @@ export function SurveyApp() {
           )}
         </AnimatePresence>
       </div>
+      {view === "welcome" && <WelcomeJourney />}
       <footer className="experience-footer">
         <Leaf size={15} strokeWidth={1.3} />
         <span>A small pause. A shared step forward.</span>

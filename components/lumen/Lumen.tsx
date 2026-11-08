@@ -281,7 +281,7 @@ export function Lumen({
         {hero && (
           <>
             <span className="lumen-name" aria-hidden="true">
-              lumen<span>A LITTLE ROOM TO GROW</span>
+              lumen<span>YOUR LITTLE COMPANION</span>
             </span>
             <span className="lumen-touch-note" aria-hidden="true">
               <Sparkles size={12} /> tap for a little hello

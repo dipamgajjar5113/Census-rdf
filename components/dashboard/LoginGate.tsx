@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import {
+  ArrowRight,
+  Leaf,
+  LockKeyhole,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export function LoginGate({ onSuccess }: { onSuccess: () => void }) {
@@ -34,26 +40,56 @@ export function LoginGate({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col items-center justify-center px-6 pt-28 pb-16">
+    <main className="organizer-access">
+      <section className="access-story" aria-labelledby="access-title">
+        <p className="eyebrow">
+          <Leaf size={16} strokeWidth={1.4} /> THE COMMUNITY CENSUS
+        </p>
+        <h1 id="access-title">
+          A little insight.
+          <br />
+          <em>A lot of care.</em>
+        </h1>
+        <p className="access-description">
+          Every check-in is a small part of a bigger picture. See how your
+          community is feeling, and help make room for what they need.
+        </p>
+        <div className="access-principles">
+          <div>
+            <ShieldCheck size={20} strokeWidth={1.4} />
+            <span>
+              Private by design
+              <small>Anonymous answers. Shared understanding.</small>
+            </span>
+          </div>
+          <div>
+            <Users size={20} strokeWidth={1.4} />
+            <span>
+              A view of the whole
+              <small>Community insights, thoughtfully gathered.</small>
+            </span>
+          </div>
+        </div>
+      </section>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full rounded-3xl border border-border bg-card p-7 shadow-soft-lg"
+        className="access-card"
       >
-        <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-primary/12 text-primary">
-          <Lock size={22} aria-hidden="true" />
+        <div className="access-card-heading">
+          <span className="access-lock">
+            <LockKeyhole size={23} strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <span>FOR ORGANIZERS</span>
         </div>
-        <h1 className="font-serif text-2xl tracking-tight text-fg">Organizer access</h1>
-        <p className="mt-1 text-sm text-muted-fg">
-          The census is password-protected. Enter the organizer password to view
-          aggregate results.
+        <h2>Welcome back.</h2>
+        <p className="access-card-description">
+          Enter your organizer password to open the community census.
         </p>
 
-        <form onSubmit={submit} className="mt-6">
-          <label htmlFor="pw" className="mb-1.5 block text-sm font-medium text-fg">
-            Password
-          </label>
+        <form onSubmit={submit} className="access-form">
+          <label htmlFor="pw">Organizer password</label>
           <input
             id="pw"
             type="password"
@@ -62,19 +98,34 @@ export function LoginGate({ onSuccess }: { onSuccess: () => void }) {
             onChange={(e) => setPassword(e.target.value)}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? "pw-error" : undefined}
-            className="w-full rounded-2xl border border-border bg-bg-raised px-4 py-3 text-fg shadow-soft-inset outline-none transition focus:border-primary focus:shadow-glow"
-            placeholder="••••••••"
+            className="access-password"
+            placeholder="Enter your password"
+            required
           />
           {error && (
-            <p id="pw-error" role="alert" className="mt-2 text-sm text-destructive">
+            <p
+              id="pw-error"
+              role="alert"
+              className="mt-2 text-sm text-destructive"
+            >
               {error}
             </p>
           )}
-          <Button type="submit" className="mt-5 w-full" loading={loading} disabled={!password}>
+          <Button
+            type="submit"
+            className="access-submit"
+            loading={loading}
+            disabled={!password}
+          >
             {loading ? "Checking…" : "Unlock dashboard"}
+            {!loading && <ArrowRight size={17} strokeWidth={1.5} />}
           </Button>
         </form>
+        <p className="access-privacy">
+          <ShieldCheck size={15} strokeWidth={1.5} /> A protected space for
+          community insights.
+        </p>
       </motion.div>
-    </div>
+    </main>
   );
 }

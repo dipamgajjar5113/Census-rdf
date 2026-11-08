@@ -23,18 +23,15 @@ export function StatCard({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-3xl border border-border bg-card p-5 shadow-soft"
+      className="stat-card"
+      data-accent={accent}
     >
-      <div
-        className={`mb-3 grid h-10 w-10 place-items-center rounded-2xl ${
-          accent ? "bg-accent/15 text-accent" : "bg-primary/12 text-primary"
-        }`}
-      >
+      <div className="stat-icon">
         <Icon size={20} aria-hidden="true" />
       </div>
-      <div className="tnum font-serif text-3xl tracking-tight text-fg">{value}</div>
-      <div className="mt-0.5 text-sm font-medium text-fg">{label}</div>
-      {sub && <div className="mt-1 text-xs text-muted-fg">{sub}</div>}
+      <div className="stat-value tnum">{value}</div>
+      <div className="stat-label">{label}</div>
+      {sub && <div className="stat-sub">{sub}</div>}
     </motion.div>
   );
 }
