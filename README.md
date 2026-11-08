@@ -6,12 +6,13 @@ Behind a password-protected dashboard, organizers see the aggregate census.
 
 Inspired by the project's eucalyptus-and-timber health-fair sign: warm parchment,
 sage greens, natural botanical artwork, and a persistent 3D companion — **Lumen**.
-One question at a time, with native keyboard controls and normal page scrolling.
+One question at a time, with native keyboard controls, a stable desktop frame,
+and natural scrolling on phones.
 
 ## The experience
 
 - **Welcome → 6 questions (one at a time) → thank-you**, with directional
-  crossfade transitions and a segmented, rewarding progress rail.
+  desktop transitions, immediate mobile question changes, and a segmented progress rail.
 - **Lumen**, a sculpted jade seed with a flexible leaf crown, a photographic
   eucalyptus wreath, custom surface shading, and local studio lighting,
   pointer-following eyes, blinking, expressive brows, and a morphing smile.
@@ -32,11 +33,12 @@ Next.js 14 (App Router) · TypeScript · Tailwind · Framer Motion · React Thre
 
 ## Design system
 
-See `design/art-direction.md` and `app/globals.css`. Tokens: parchment ground
-`#F6F3EB`, deep olive ink, sage surfaces, and warm timber accents. Lora (serif,
+See `design/art-direction.md` and the shared, viewport, and mobile styles in `app/`.
+Tokens: parchment ground `#F3F2EB`, deep forest ink, sage surfaces, and warm timber accents. Lora (serif,
 questions) + DM Sans (UI), with forest-green dark mode. The optimized botanical
 asset is local and keeps its transparency. Layouts adapt to portrait and landscape
-phones, tablets, and desktop screens without a fixed-height question enclosure.
+phones, tablets, and desktop screens. Larger screens keep a stable viewport;
+phones use readable answer cards, sticky progress and navigation, and document scrolling.
 
 ## Running locally
 

@@ -9,7 +9,13 @@ import {
   useRef,
   useState,
 } from "react";
-import type { LumenExpression, LumenMood, LumenReaction, SurveyView } from "@/lib/types";
+import type {
+  LumenExpression,
+  LumenMood,
+  LumenReaction,
+  SurveyView,
+} from "@/lib/types";
+import { MotionConfig } from "framer-motion";
 
 interface LumenState {
   stage: SurveyView;
@@ -66,13 +72,16 @@ export function LumenProvider({ children }: { children: React.ReactNode }) {
   const speechTimer = useRef<number | null>(null);
   const bloomTimer = useRef<number | null>(null);
 
-  useEffect(() => () => {
-    if (speechTimer.current) window.clearTimeout(speechTimer.current);
-    if (bloomTimer.current) window.clearTimeout(bloomTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (speechTimer.current) window.clearTimeout(speechTimer.current);
+      if (bloomTimer.current) window.clearTimeout(bloomTimer.current);
+    },
+    [],
+  );
 
   const setStage = useCallback((stage: SurveyView) => {
-    setState((s) => s.stage === stage ? s : { ...s, stage });
+    setState((s) => (s.stage === stage ? s : { ...s, stage }));
   }, []);
 
   const setMood = useCallback((mood: LumenMood) => {
@@ -88,7 +97,7 @@ export function LumenProvider({ children }: { children: React.ReactNode }) {
 
   const setProgress = useCallback((progress: number) => {
     const next = Math.max(0, Math.min(1, progress));
-    setState((s) => s.progress === next ? s : { ...s, progress: next });
+    setState((s) => (s.progress === next ? s : { ...s, progress: next }));
   }, []);
 
   const ripple = useCallback(() => {
@@ -118,7 +127,7 @@ export function LumenProvider({ children }: { children: React.ReactNode }) {
       }));
       if (opts.say) say(opts.say, opts.sayMs);
     },
-    [setMood, say]
+    [setMood, say],
   );
 
   const bloom = useCallback(() => {
@@ -151,10 +160,25 @@ export function LumenProvider({ children }: { children: React.ReactNode }) {
       express,
       bloom,
     }),
-    [state, setStage, setMood, setExpression, setProgress, ripple, react, say, express, bloom]
+    [
+      state,
+      setStage,
+      setMood,
+      setExpression,
+      setProgress,
+      ripple,
+      react,
+      say,
+      express,
+      bloom,
+    ],
   );
 
-  return <LumenContext.Provider value={api}>{children}</LumenContext.Provider>;
+  return (
+    <MotionConfig reducedMotion="user">
+      <LumenContext.Provider value={api}>{children}</LumenContext.Provider>
+    </MotionConfig>
+  );
 }
 
 export function useLumen(): LumenApi {

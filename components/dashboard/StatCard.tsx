@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
+import { useMobileLayout } from "@/lib/mobile-layout";
 
 export function StatCard({
   icon: Icon,
@@ -18,11 +19,18 @@ export function StatCard({
   delay?: number;
   accent?: boolean;
 }) {
+  const mobile = useMobileLayout();
+  const reduced = useReducedMotion() ?? false;
+  const instant = mobile || reduced;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
+      initial={instant ? false : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{
+        duration: instant ? 0 : 0.45,
+        delay: instant ? 0 : delay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
       className="stat-card"
       data-accent={accent}
     >

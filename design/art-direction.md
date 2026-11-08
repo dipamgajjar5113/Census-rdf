@@ -15,8 +15,8 @@ have consistent heights, inset highlights, and clear pressed and disabled states
 
 The welcome view pairs editorial copy and an immediately available start action
 with Lumen's framed botanical portrait. Above 680px the application fits the
-viewport using `app/viewport.css`. Desktop omits the secondary journey cards,
-repeated reassurance, and duplicate question labels to preserve generous type
+viewport using `app/viewport.css`. Secondary journey cards are omitted throughout;
+desktop also omits repeated reassurance and duplicate question labels to preserve generous type
 and spacing. The progress rail and question navigation keep stable bounds across
 all six questions. Answer explanations have a reserved column; the completion
 screen places the affirmation and intention side by side. The privacy disclosure
@@ -24,11 +24,29 @@ opens above its trigger without changing the page height.
 
 Lumen stays mounted between survey views. It has its own paper surface on wide
 screens and shares the progress row on narrower tablets. Short desktop windows
-omit the secondary companion panel to give the form its full width. Below 681px,
-the welcome introduction, start action, companion, and journey cards use normal
-document scrolling, and the survey companion becomes an inline row. Only mobile
-question changes scroll the heading into view. Native radio controls, visible
-focus, and selection limits remain available in both layouts.
+omit the secondary companion panel to give the form its full width.
+
+## Mobile composition
+
+`app/mobile.css` owns phone layouts, replacing the old small-screen overrides.
+Phones use normal document scrolling, an immediately available welcome action,
+and a full botanical portrait. Feeling choices become readable full-width stones;
+stress sources use generous tiles, with a single-column list on narrow phones.
+Selection labels stay at 14–15px and interactive targets are at least 44px.
+
+During the survey, Lumen becomes a light inline companion. A sticky progress strip
+and navigation keep context and actions reachable on long questions. Question
+and census-tab changes are immediate on mobile. Question changes scroll to the progress strip rather than
+animating through a temporarily empty page. Focused goal entry releases sticky
+controls so a soft keyboard can use the available space; inputs keep a 16px font.
+Completion, organizer access, metrics, charts, and data tools share the same
+reading and touch sizes. Page edges and bottom controls account for safe areas.
+
+`lib/mobile-layout.ts` matches both narrow screens and coarse-pointer phones
+rotated into landscape. This query must stay aligned with `app/mobile.css`.
+Reduced-motion preferences apply through the shared MotionConfig as well as
+Lumen's scene controls. Native radio navigation, focus outlines, optional answers,
+and selection limits remain available in every layout.
 
 The organizer login uses a two-column introduction and form. The desktop census
 keeps its header, metrics, and tabs in the viewport; long data collections scroll

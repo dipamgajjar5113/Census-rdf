@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Leaf, Moon, Sun, Home } from "lucide-react";
+import {
+  ArrowUpRight,
+  Leaf,
+  Moon,
+  Sun,
+  Home,
+  LayoutDashboard,
+} from "lucide-react";
 
 export function SiteChrome() {
   const pathname = usePathname();
@@ -71,6 +78,13 @@ export function SiteChrome() {
             onDashboard ? "Back to check-in" : "Open organizer dashboard"
           }
         >
+          <span className="organizer-mobile-icon" aria-hidden="true">
+            {onDashboard ? (
+              <Home size={18} strokeWidth={1.6} />
+            ) : (
+              <LayoutDashboard size={18} strokeWidth={1.6} />
+            )}
+          </span>
           {onDashboard ? <Home size={15} /> : null}
           <span>{onDashboard ? "Check-in" : "For organizers"}</span>
           <ArrowUpRight size={15} strokeWidth={1.5} />

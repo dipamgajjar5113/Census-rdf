@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Leaf } from "lucide-react";
-import { WelcomeJourney, WelcomeScreen } from "./survey/WelcomeScreen";
+import { WelcomeScreen } from "./survey/WelcomeScreen";
 import { QuestionScreen } from "./survey/QuestionScreen";
 import { ProgressRail } from "./survey/ProgressRail";
 import { ThanksScreen } from "./survey/ThanksScreen";
@@ -11,6 +11,7 @@ import { useLumen } from "./lumen/LumenProvider";
 import { Lumen } from "./lumen/Lumen";
 import { QUESTIONS } from "@/lib/questions";
 import { enqueue, flushQueue } from "@/lib/queue";
+import { isMobileLayout } from "@/lib/mobile-layout";
 import {
   reactionForAnswer,
   restingBeatFor,
@@ -168,7 +169,7 @@ export function SurveyApp() {
   }, [doSync]);
 
   const restart = useCallback(() => {
-    if (window.matchMedia("(max-width: 680px)").matches) {
+    if (isMobileLayout()) {
       window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     }
     setAnswers(EMPTY);
@@ -230,7 +231,7 @@ export function SurveyApp() {
               <WelcomeScreen
                 onStart={() => {
                   window.clearTimeout(welcomeTimer.current);
-                  if (window.matchMedia("(max-width: 680px)").matches) {
+                  if (isMobileLayout()) {
                     window.scrollTo({
                       top: 0,
                       behavior: reduced ? "auto" : "smooth",
@@ -290,7 +291,6 @@ export function SurveyApp() {
           )}
         </AnimatePresence>
       </div>
-      {view === "welcome" && <WelcomeJourney />}
       <footer className="experience-footer">
         <Leaf size={15} strokeWidth={1.3} />
         <span>A small pause. A shared step forward.</span>

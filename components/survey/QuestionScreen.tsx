@@ -9,6 +9,7 @@ import { MultiInput } from "./inputs/MultiInput";
 import { SingleInput } from "./inputs/SingleInput";
 import { TextInput } from "./inputs/TextInput";
 import { QUESTIONS } from "@/lib/questions";
+import { isMobileLayout, useMobileLayout } from "@/lib/mobile-layout";
 import type { Answer, Question } from "@/lib/types";
 
 interface Props {
@@ -31,6 +32,8 @@ export function QuestionScreen({
   onSkip,
 }: Props) {
   const reduced = useReducedMotion() ?? false;
+  const mobile = useMobileLayout();
+  const instant = reduced || mobile;
   const panel = useRef<HTMLDivElement>(null);
   const q = QUESTIONS[index];
   const value = answers[q.id];
@@ -43,11 +46,12 @@ export function QuestionScreen({
       if (!heading) return;
       heading.focus({ preventScroll: true });
       // Only mobile follows the document scroll. Desktop keeps its frame still.
-      if (
-        window.matchMedia("(max-width: 680px)").matches &&
-        (index > 0 || direction < 0)
-      )
-        panel.current?.scrollIntoView({
+      if (isMobileLayout() && (index > 0 || direction < 0))
+        (
+          panel.current
+            ?.closest(".survey-experience")
+            ?.querySelector(".experience-progress") ?? panel.current
+        )?.scrollIntoView({
           block: "start",
           behavior: reduced ? "auto" : "smooth",
         });
@@ -66,23 +70,27 @@ export function QuestionScreen({
           <motion.div
             key={q.id}
             custom={direction}
-            initial={reduced ? false : "enter"}
+            initial={instant ? false : "enter"}
             animate="center"
             exit="exit"
             variants={{
               enter: (dir: number) => ({ opacity: 0, x: dir * 16 }),
               center: { opacity: 1, x: 0 },
               exit: (dir: number) => ({
-                opacity: reduced ? 1 : 0,
-                x: reduced ? 0 : dir * -12,
+                opacity: instant ? 1 : 0,
+                x: instant ? 0 : dir * -12,
               }),
             }}
-            transition={{ duration: reduced ? 0 : 0.22 }}
+            transition={{ duration: instant ? 0 : 0.22 }}
             className="question-body"
           >
             <div className="question-kicker">
               <span>{String(index + 1).padStart(2, "0")}</span>
               {q.title}
+              <span className="mobile-question-count" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")} /{" "}
+                {String(QUESTIONS.length).padStart(2, "0")}
+              </span>
             </div>
             <h1 ref={focusHeading} tabIndex={-1} className="question-title">
               {q.prompt}
@@ -129,6 +137,7 @@ export function QuestionScreen({
             variant="ghost"
             size="sm"
             onClick={onBack}
+            aria-label="Back"
             disabled={index === 0}
           >
             <ArrowLeft size={16} /> <span>Back</span>

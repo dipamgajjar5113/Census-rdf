@@ -5,9 +5,7 @@ import {
   ArrowRight,
   ChevronDown,
   Clock3,
-  HeartHandshake,
   Leaf,
-  HeartPulse,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -77,61 +75,5 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
         </motion.div>
       </div>
     </motion.div>
-  );
-}
-
-const JOURNEY = [
-  {
-    number: "01",
-    title: "Notice",
-    detail: "Make a little space for how you’re really feeling.",
-    icon: HeartPulse,
-  },
-  {
-    number: "02",
-    title: "Reflect",
-    detail: "Find a fresh perspective on what’s on your mind.",
-    icon: Sparkles,
-  },
-  {
-    number: "03",
-    title: "Care",
-    detail: "Leave with one small, kind step to take for yourself.",
-    icon: HeartHandshake,
-  },
-];
-
-export function WelcomeJourney() {
-  return (
-    <section
-      className="welcome-journey-section"
-      aria-labelledby="journey-title"
-    >
-      <div className="journey-heading">
-        <div>
-          <p className="eyebrow">A LITTLE SPACE TO RESET</p>
-          <h2 id="journey-title">
-            A small pause. <em>A softer day.</em>
-          </h2>
-        </div>
-        <p>Six gentle questions. Your own pace.</p>
-      </div>
-      <ol className="welcome-journey">
-        {JOURNEY.map(({ number, title, detail, icon: Icon }) => (
-          <li key={number}>
-            <span className="journey-icon" aria-hidden="true">
-              <Icon size={23} strokeWidth={1.4} />
-            </span>
-            <div>
-              <h3>{title}</h3>
-              <p>{detail}</p>
-            </div>
-            <span className="journey-number" aria-hidden="true">
-              {number}
-            </span>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }

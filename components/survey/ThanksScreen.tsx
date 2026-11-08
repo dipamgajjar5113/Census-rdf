@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { STRESS_MOOD } from "@/lib/questions";
 import { looksIdentifying } from "@/lib/identity-filter";
+import { isMobileLayout } from "@/lib/mobile-layout";
 import type { Answer, SyncStatus } from "@/lib/types";
 
 const SYNC_COPY: Record<SyncStatus, string> = {
@@ -38,7 +39,7 @@ export function ThanksScreen({
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     title.current?.focus({ preventScroll: true });
-    if (window.matchMedia("(max-width: 680px)").matches) {
+    if (isMobileLayout()) {
       window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     }
   }, [reduced]);

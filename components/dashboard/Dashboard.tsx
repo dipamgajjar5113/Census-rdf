@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Users,
   Target,
@@ -26,6 +26,7 @@ import { BarRow } from "./BarRow";
 import { QUESTIONS } from "@/lib/questions";
 import { MIN_CENSUS } from "@/lib/summarize";
 import { labelFor, recordsToCsv } from "@/lib/labels";
+import { useMobileLayout } from "@/lib/mobile-layout";
 import type { CheckinRecord, QuestionId, Summary } from "@/lib/types";
 
 type Tab = "census" | "details" | "goals";
@@ -52,6 +53,9 @@ export function Dashboard({
   const [tab, setTab] = useState<Tab>("census");
   const [copied, setCopied] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const mobile = useMobileLayout();
+  const reduced = useReducedMotion() ?? false;
+  const instant = mobile || reduced;
 
   const total = summary.total;
   const enough = total >= MIN_CENSUS;
@@ -212,10 +216,10 @@ export function Dashboard({
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
-            initial={{ opacity: 0, y: 8 }}
+            initial={instant ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25 }}
+            exit={{ opacity: instant ? 1 : 0, y: instant ? 0 : -8 }}
+            transition={{ duration: instant ? 0 : 0.25 }}
           >
             {tab === "census" && (
               <CensusPanel enough={enough} total={total} insights={insights} />
@@ -242,7 +246,7 @@ export function Dashboard({
           </Button>
           <div className="ml-auto">
             {confirmClear ? (
-              <div className="flex items-center gap-2">
+              <div className="data-clear-confirmation flex items-center gap-2">
                 <span className="text-sm text-destructive">
                   Clear all data?
                 </span>
@@ -439,6 +443,9 @@ function DetailsPanel({ summary }: { summary: Summary }) {
 }
 
 function GoalsPanel({ records }: { records: CheckinRecord[] }) {
+  const mobile = useMobileLayout();
+  const reduced = useReducedMotion() ?? false;
+  const instant = mobile || reduced;
   const goals = records
     .map((r) => r.goal)
     .filter((g): g is string => Boolean(g && g.trim()));
@@ -455,9 +462,12 @@ function GoalsPanel({ records }: { records: CheckinRecord[] }) {
       {goals.map((g, i) => (
         <motion.blockquote
           key={i}
-          initial={{ opacity: 0, y: 10 }}
+          initial={instant ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: Math.min(i * 0.03, 0.4) }}
+          transition={{
+            duration: instant ? 0 : 0.4,
+            delay: instant ? 0 : Math.min(i * 0.03, 0.4),
+          }}
           className="dashboard-goal"
         >
           <Sprout size={20} strokeWidth={1.4} aria-hidden="true" />
