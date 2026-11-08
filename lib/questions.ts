@@ -44,14 +44,14 @@ export const QUESTIONS: Question[] = [
     type: "single",
     title: "A moment to reflect",
     prompt:
-      "Priya has three deadlines this week and feels her heart racing. Which part would you call the stressor?",
+      "Someone has three deadlines this week and feels their heart racing. Which part would you call the stressor?",
     help: "There's no wrong answer — just notice what you think.",
     correct: "deadlines",
     explain:
       "The three deadlines are the stressor — the external demand. The racing heart is the stress response, your body reacting to it. Naming which is which helps you respond to the right thing.",
     options: [
       { value: "deadlines", label: "The three deadlines" },
-      { value: "heart", label: "Her racing heart" },
+      { value: "heart", label: "Their racing heart" },
       { value: "feeling", label: "Feeling overwhelmed" },
     ],
   },
